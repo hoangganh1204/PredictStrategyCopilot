@@ -88,43 +88,43 @@
 
 ### Tests First (TDD — Red Phase)
 
-- [ ] T016 [P] [US2] Write `tests/unit/strategy/sviMath.test.ts`: test `computeTotalVariance()` with known SVI params → expected w value. Test `computeImpliedVol()` → expected σ. Test `computeSigmaMove()` → expected price move. Use real params captured from probe.
+- [X] T016 [P] [US2] Write `tests/unit/strategy/sviMath.test.ts`: test `computeTotalVariance()` with known SVI params → expected w value. Test `computeImpliedVol()` → expected σ. Test `computeSigmaMove()` → expected price move. Use real params captured from probe.
   - **Verify**: Tests exist and FAIL (functions not yet implemented).
 
-- [ ] T017 [P] [US2] Write `tests/unit/strategy/snapToGrid.test.ts`: test `snapToGrid()` — exact match, nearest below, nearest above, target outside grid returns null if > 0.5σ. Test `snapRangeToGrid()` — both bounds snap correctly.
+- [X] T017 [P] [US2] Write `tests/unit/strategy/snapToGrid.test.ts`: test `snapToGrid()` — exact match, nearest below, nearest above, target outside grid returns null if > 0.5σ. Test `snapRangeToGrid()` — both bounds snap correctly.
   - **Verify**: Tests exist and FAIL.
 
-- [ ] T018 [P] [US2] Write `tests/unit/strategy/computeStrategies.test.ts`: test full pipeline with a mock `OracleSnapshot` (from probe data). **Mock `SuiClient.devInspectTransactionBlock`** to return sample `(mint_cost, redeem_payout)` captured from T014 probe output — this is required because `computeStrategies` receives `SuiClient` as a dependency for pricing. Assert: returns 3 strategies (range, binary-up, binary-down). Each has strike/range within valid grid. cost_raw > 0. payout_raw > cost_raw. prob in (0,1).
+- [X] T018 [P] [US2] Write `tests/unit/strategy/computeStrategies.test.ts`: test full pipeline with a mock `OracleSnapshot` (from probe data). **Mock `SuiClient.devInspectTransactionBlock`** to return sample `(mint_cost, redeem_payout)` captured from T014 probe output — this is required because `computeStrategies` receives `SuiClient` as a dependency for pricing. Assert: returns 3 strategies (range, binary-up, binary-down). Each has strike/range within valid grid. cost_raw > 0. payout_raw > cost_raw. prob in (0,1).
   - **Verify**: Tests exist and FAIL (functions not yet implemented, but mock is complete).
 
-- [ ] T019 [P] [US2] Write `tests/unit/predict-client.test.ts`: test `fetchOracleState()`, `fetchSviLatest()`, `fetchAskBounds()` with MSW mocks matching types from T008. Test error handling for non-200 responses.
+- [X] T019 [P] [US2] Write `tests/unit/predict-client.test.ts`: test `fetchOracleState()`, `fetchSviLatest()`, `fetchAskBounds()` with MSW mocks matching types from T008. Test error handling for non-200 responses.
   - **Verify**: Tests exist and FAIL.
 
 ### Implementation (TDD — Green Phase)
 
-- [ ] T020 [US2] Implement `src/lib/strategy/types.ts`: define `OracleSnapshot`, `SVIParams` (with scale factors from probe), `Strategy`, `StrategyType` enum (`range | binary_up | binary_down`). All price/cost fields use `bigint` suffix `_raw`.
+- [X] T020 [US2] Implement `src/lib/strategy/types.ts`: define `OracleSnapshot`, `SVIParams` (with scale factors from probe), `Strategy`, `StrategyType` enum (`range | binary_up | binary_down`). All price/cost fields use `bigint` suffix `_raw`.
   - **Verify**: `tsc --noEmit` passes.
 
-- [ ] T021 [US2] Implement `src/lib/strategy/sviMath.ts`: `computeTotalVariance()`, `computeImpliedVol()` (formula per probe item #7), `computeSigmaMove()`. Use native `Math.sqrt/exp/log`. Handle I64→signed conversion for rho, m.
+- [X] T021 [US2] Implement `src/lib/strategy/sviMath.ts`: `computeTotalVariance()`, `computeImpliedVol()` (formula per probe item #7), `computeSigmaMove()`. Use native `Math.sqrt/exp/log`. Handle I64→signed conversion for rho, m.
   - **Verify**: `pnpm vitest run tests/unit/strategy/sviMath.test.ts` — all GREEN.
 
-- [ ] T022 [US2] Implement `src/lib/strategy/snapToGrid.ts`: `snapToGrid()`, `snapRangeToGrid()`. Accept `validStrikes: bigint[]`, return closest valid strike or `null` if beyond 0.5σ threshold.
+- [X] T022 [US2] Implement `src/lib/strategy/snapToGrid.ts`: `snapToGrid()`, `snapRangeToGrid()`. Accept `validStrikes: bigint[]`, return closest valid strike or `null` if beyond 0.5σ threshold.
   - **Verify**: `pnpm vitest run tests/unit/strategy/snapToGrid.test.ts` — all GREEN.
 
-- [ ] T023 [US2] Implement `src/lib/predict-client.ts`: typed fetch wrapper for all Public Server endpoints. Use `PREDICT_CONFIG.SERVER_URL` as base. Type responses with interfaces from T008. Throw typed errors for non-200.
+- [X] T023 [US2] Implement `src/lib/predict-client.ts`: typed fetch wrapper for all Public Server endpoints. Use `PREDICT_CONFIG.SERVER_URL` as base. Type responses with interfaces from T008. Throw typed errors for non-200.
   - **Verify**: `pnpm vitest run tests/unit/predict-client.test.ts` — all GREEN.
 
-- [ ] T024a [US2] Implement `src/lib/strategy/computeStrategies.ts` — core orchestration: input `OracleSnapshot`, compute σ_move via sviMath, build 3 strategy skeletons per FR-004 (range ±1σ, binary-up, binary-down −2σ), snap to grid via snapToGrid. For cost/payout: accept an abstract `PricingFn` callback `(strike, quantity) => { mint_cost_raw, redeem_payout_raw }`. Return `Strategy[]` or error.
+- [X] T024a [US2] Implement `src/lib/strategy/computeStrategies.ts` — core orchestration: input `OracleSnapshot`, compute σ_move via sviMath, build 3 strategy skeletons per FR-004 (range ±1σ, binary-up, binary-down −2σ), snap to grid via snapToGrid. For cost/payout: accept an abstract `PricingFn` callback `(strike, quantity) => { mint_cost_raw, redeem_payout_raw }`. Return `Strategy[]` or error.
   - **Verify**: `pnpm vitest run tests/unit/strategy/computeStrategies.test.ts` — all GREEN (using mock PricingFn).
 
-- [ ] T024b [US2] Wire devInspect into `computeStrategies`: implement concrete `PricingFn` that calls `SuiClient.devInspectTransactionBlock` with `predict::get_trade_amounts` / `get_range_trade_amounts`. Test with real testnet data.
+- [X] T024b [US2] Wire devInspect into `computeStrategies`: implement concrete `PricingFn` that calls `SuiClient.devInspectTransactionBlock` with `predict::get_trade_amounts` / `get_range_trade_amounts`. Test with real testnet data.
   - **Verify**: `computeStrategies` returns strategies with cost/payout matching devInspect output from T014.
   - **Depends on**: T014 (devInspect verified), T024a
 
-- [ ] T025 [US2] Implement `src/app/api/strategies/route.ts`: parse query params (amount, expiry). Parallel fetch oracle + SVI + ask-bounds via predict-client. Check staleness: `Date.now() - svi.updatedAt > 30_000` → 400 `ERR_STALE_SVI`. Check market open → 400 `ERR_NO_MARKET`. Init `SuiClient` server-side. Call `computeStrategies()` with devInspect PricingFn. Return JSON.
+- [X] T025 [US2] Implement `src/app/api/strategies/route.ts`: parse query params (amount, expiry). Parallel fetch oracle + SVI + ask-bounds via predict-client. Check staleness: `Date.now() - svi.updatedAt > 30_000` → 400 `ERR_STALE_SVI`. Check market open → 400 `ERR_NO_MARKET`. Init `SuiClient` server-side. Call `computeStrategies()` with devInspect PricingFn. Return JSON.
   - **Verify**: `curl localhost:3000/api/strategies?amount=10&expiry=15m` returns valid strategy JSON from testnet.
 
-- [ ] T026 [US2] Write `tests/integration/api-strategies.test.ts`: hit actual API Route with MSW mocking Public Server responses + mock devInspect. Assert: correct response shape, 3 strategies, error cases (stale SVI, no market).
+- [X] T026 [US2] Write `tests/integration/api-strategies.test.ts`: hit actual API Route with MSW mocking Public Server responses + mock devInspect. Assert: correct response shape, 3 strategies, error cases (stale SVI, no market).
   - **Verify**: `pnpm vitest run tests/integration/api-strategies.test.ts` — all GREEN.
 
 **Checkpoint**: Strategy Engine complete. `GET /api/strategies` works with real testnet data. ≥80% coverage on `lib/strategy/`. FR-003, FR-004, FR-005 satisfied.

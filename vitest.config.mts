@@ -8,10 +8,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: "jsdom",
+    // Default: node env for server-side / pure logic tests
+    // React component tests can override with @vitest-environment jsdom docblock
+    environment: "node",
     globals: true,
     setupFiles: [],
     passWithNoTests: true,
+    // Treat @mysten/* and MSW as external ESM — don't try to bundle them
+    server: {
+      deps: {
+        external: [/node_modules/],
+      },
+    },
   },
   resolve: {
     alias: {
