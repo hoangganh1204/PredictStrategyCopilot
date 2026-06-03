@@ -213,30 +213,18 @@
 
 ---
 
+
 ## Phase 6: US2 UI — Strategy Display
 
 **Goal**: User enters amount + expiry, sees 2–3 strategies in plain language within 3s.
 
-**Independent Test**: Enter 10 DUSDC + 15m → 3 strategy cards appear with cost, payout, prob, countdown.
+- [X] T040 [P] [US2] Implement `src/hooks/useStrategies.ts`: TanStack Query hook calling `GET /api/strategies?amount=X&expiry=Y`. Return `Strategy[]` or error state. staleTime 30s.
+- [X] T041 [P] [US2] Implement `src/components/StrategyCard.tsx`: plain language labels (FR-009), countdown, cost/payout/prob display. No option jargon.
+- [X] T042 [US2] Implement `src/components/StrategyList.tsx`: skeleton after 300ms, ERR_NO_MARKET/ERR_STALE_SVI messages in Vietnamese.
+- [X] T043 [US2] Implement `src/components/AmountInput.tsx`: amount input + expiry selector (15m/30m/1h). Validates amount > 0 ≤ balance (FR-006a).
+- [X] T044 [US2] Implement `src/app/play/page.tsx`: BalanceDisplay + DepositForm (if balance=0) + AmountInput + StrategyList wired together.
 
-**Spec refs**: FR-003, FR-004, FR-005, FR-009, SC-002
-
-- [ ] T040 [P] [US2] Implement `src/hooks/useStrategies.ts`: TanStack Query hook calling `GET /api/strategies?amount=X&expiry=Y`. Return `Strategy[]` or error state. staleTime 30s.
-  - **Verify**: Hook returns strategy data from API Route.
-
-- [ ] T041 [P] [US2] Implement `src/components/StrategyCard.tsx`: display one strategy. Plain language label (FR-009): "Đặt giá đứng yên", "Đặt giá lên", "Phòng cú sập". Show: description, cost_dusdc, payout_dusdc, prob%, countdown timer. No option jargon.
-  - **Verify**: Card renders with all 5 info fields; no "strike", "implied volatility", "vol curve" text.
-
-- [ ] T042 [US2] Implement `src/components/StrategyList.tsx`: container for 2–3 StrategyCards. Handle states: loading (skeleton after 300ms — Constitution III), error (ERR_NO_MARKET → friendly message VN), stale SVI warning.
-  - **Verify**: Loading skeleton shows if fetch > 300ms; "no market" message shows for closed expiry.
-
-- [ ] T043 [US2] Implement `src/components/AmountInput.tsx`: number input for DUSDC amount + expiry selector (15 phút / 30 phút / 1 giờ). Validate: amount > 0, amount ≤ game account balance (FR-006a). Disable submit if invalid.
-  - **Verify**: Invalid amount → button disabled + error message; valid input → strategies fetch triggered.
-
-- [ ] T044 [US2] Implement `src/app/play/page.tsx`: compose BalanceDisplay + DepositForm (if balance=0) + AmountInput + StrategyList. Wire up: amount+expiry → useStrategies → StrategyList.
-  - **Verify**: Full flow: enter amount → pick expiry → strategies appear within 3s (SC-002).
-
-**Checkpoint**: US2 UI complete. User sees strategies in plain Vietnamese. SC-002, FR-009 verified.
+**Checkpoint**: US2 UI complete. FR-003, FR-004, FR-005, FR-009, SC-002 satisfied.
 
 ---
 
