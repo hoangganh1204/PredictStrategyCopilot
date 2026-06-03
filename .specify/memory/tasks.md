@@ -141,31 +141,31 @@
 
 ### Implementation
 
-- [ ] T027 [US3] Implement `src/lib/execute/types.ts`: `TxResult` type (`status: 'success' | 'failed' | 'rejected'`, `digest?`, `error?`). `PositionState` enum. `MintParams`, `RedeemParams` interfaces. All amount fields `bigint` (`_raw`).
+- [X] T027 [US3] Implement `src/lib/execute/types.ts`: `TxResult` type (`status: 'success' | 'failed' | 'rejected'`, `digest?`, `error?`). `PositionState` enum. `MintParams`, `RedeemParams` interfaces. All amount fields `bigint` (`_raw`).
   - **Verify**: `tsc --noEmit` passes.
 
-- [ ] T028 [US3] Implement `src/lib/execute/findOrCreateManager.ts`: query owned objects by type `PredictManager` → return ID if found. If not, build PTB calling `predict::create_manager(ctx)`. Accept `SuiClient` + `signAndExecute` callback as deps (no direct wallet import).
+- [X] T028 [US3] Implement `src/lib/execute/findOrCreateManager.ts`: query owned objects by type `PredictManager` → return ID if found. If not, build PTB calling `predict::create_manager(ctx)`. Accept `SuiClient` + `signAndExecute` callback as deps (no direct wallet import).
   - **Verify**: Manual test with testnet wallet → PredictManager created or found; ID returned.
 
-- [ ] T029 [US3] Implement `src/lib/execute/depositDusdc.ts` (FR-013): build PTB that splits DUSDC coin from wallet, calls `predict_manager::deposit<DUSDC>(manager, coin, ctx)`. Input: `managerId`, `amount_raw` (bigint). Return `Transaction` object.
+- [X] T029 [US3] Implement `src/lib/execute/depositDusdc.ts` (FR-013): build PTB that splits DUSDC coin from wallet, calls `predict_manager::deposit<DUSDC>(manager, coin, ctx)`. Input: `managerId`, `amount_raw` (bigint). Return `Transaction` object.
   - **Verify**: Manual test → deposit tx succeeds; manager balance increases in Public Server.
 
-- [ ] T030a [US3] Implement `src/lib/execute/buildMintTx.ts` — binary only: build PTB for `predict::mint<DUSDC>`. Construct `MarketKey` using constructor pattern from T009. Input: oracleId, strike, direction, quantity_raw. Return `Transaction`.
+- [X] T030a [US3] Implement `src/lib/execute/buildMintTx.ts` — binary only: build PTB for `predict::mint<DUSDC>`. Construct `MarketKey` using constructor pattern from T009. Input: oracleId, strike, direction, quantity_raw. Return `Transaction`.
   - **Verify**: Manual test → binary mint tx succeeds on testnet; position appears in Public Server.
 
-- [ ] T030b [US3] Extend `buildMintTx.ts` — add range support: build PTB for `predict::mint_range<DUSDC>`. Construct `RangeKey` using constructor pattern from T009. Input: oracleId, lower_strike, upper_strike, quantity_raw. Return `Transaction`.
+- [X] T030b [US3] Extend `buildMintTx.ts` — add range support: build PTB for `predict::mint_range<DUSDC>`. Construct `RangeKey` using constructor pattern from T009. Input: oracleId, lower_strike, upper_strike, quantity_raw. Return `Transaction`.
   - **Verify**: Manual test → range mint tx succeeds on testnet; range position appears in Public Server.
   - **Depends on**: T030a
 
-- [ ] T031 [US3] Implement `src/lib/execute/buildRedeemTx.ts`: build PTB for `predict::redeem<DUSDC>`. Input: managerId, oracleId, key, quantity_raw. Return `Transaction`.
+- [X] T031 [US3] Implement `src/lib/execute/buildRedeemTx.ts`: build PTB for `predict::redeem<DUSDC>`. Input: managerId, oracleId, key, quantity_raw. Return `Transaction`.
   - **Verify**: Manual test → redeem tx succeeds for a settled winning position (if available).
 
-- [ ] T032 [US3] Implement `src/hooks/useExecuteTx.ts`: mutation hook wrapping `useSignAndExecuteTransaction` (dapp-kit). Handle 3 outcomes: success → return digest + invalidate queries, failed → parse error message, rejected → detect user cancel. Return `TxResult` + `isPending` state.
+- [X] T032 [US3] Implement `src/hooks/useExecuteTx.ts`: mutation hook wrapping `useSignAndExecuteTransaction` (dapp-kit). Handle 3 outcomes: success → return digest + invalidate queries, failed → parse error message, rejected → detect user cancel. Return `TxResult` + `isPending` state.
   - **Verify**: Hook compiles; TypeScript types correct; manual test in browser.
 
 ### Integration Test
 
-- [ ] T033 [US3] Write end-to-end testnet script `scripts/e2e-execute.ts`: using a test keypair, run full flow: findOrCreateManager → deposit 1 DUSDC → mint binary (using real strategy params from API) → verify position exists via Public Server. Log each step. **Security: test keypair loaded from env var `TEST_KEYPAIR` or `.env.local` — NEVER commit private key to repo. Add `scripts/e2e-execute.ts` note + `.env.local` to `.gitignore`.**
+- [X] T033 [US3] Write end-to-end testnet script `scripts/e2e-execute.ts`: using a test keypair, run full flow: findOrCreateManager → deposit 1 DUSDC → mint binary (using real strategy params from API) → verify position exists via Public Server. Log each step. **Security: test keypair loaded from env var `TEST_KEYPAIR` or `.env.local` — NEVER commit private key to repo. Add `scripts/e2e-execute.ts` note + `.env.local` to `.gitignore`.**
   - **Verify**: Script completes successfully on testnet; position visible in Public Server. `.env.local` in `.gitignore`.
 
 **Checkpoint**: Execute flow complete. SC-004 partially met (binary mint tested). FR-001, FR-008, FR-013 satisfied.
