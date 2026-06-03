@@ -197,15 +197,15 @@
 
 ### Phase 5B — Balance & Deposit (after Phase 4: T028, T029)
 
-- [ ] T036 [US1] Implement `src/hooks/useManagerBalance.ts`: TanStack Query hook. On wallet connect → call `findOrCreateManager()` (from T028) → fetch `GET /managers/:id/summary` → return balance_raw + balance_dusdc. staleTime 5s.
+- [X] T036 [US1] Implement `src/hooks/useManagerBalance.ts`: TanStack Query hook. On wallet connect → call `findOrCreateManager()` (from T028) → fetch `GET /managers/:id/summary` → return balance_raw + balance_dusdc. staleTime 5s.
   - **Verify**: Hook returns correct DUSDC balance for connected wallet.
   - **Depends on**: T028 (findOrCreateManager)
 
-- [ ] T037 [US1] Implement `src/components/BalanceDisplay.tsx`: show `balance_dusdc` formatted as `XX.XX DUSDC`. Handle loading state (skeleton). Handle no-wallet state.
+- [X] T037 [US1] Implement `src/components/BalanceDisplay.tsx`: show `balance_dusdc` formatted as `XX.XX DUSDC`. Handle loading state (skeleton). Handle no-wallet state.
   - **Verify**: Balance displays correctly; loading skeleton appears while fetching.
   - **Depends on**: T036 (useManagerBalance)
 
-- [ ] T038 [US1] Implement `src/components/DepositForm.tsx` (FR-013): input for amount, "Nạp tiền" button. Call `depositDusdc` (from T029) via `useExecuteTx`. Show TxStatusOverlay during deposit. Invalidate balance query on success.
+- [X] T038 [US1] Implement `src/components/DepositForm.tsx` (FR-013): input for amount, "Nạp tiền" button. Call `depositDusdc` (from T029) via `useExecuteTx`. Show TxStatusOverlay during deposit. Invalidate balance query on success.
   - **Verify**: Deposit DUSDC → balance updates; validation: amount > 0, amount ≤ wallet DUSDC balance.
   - **Depends on**: T029 (depositDusdc), T032 (useExecuteTx)
 
