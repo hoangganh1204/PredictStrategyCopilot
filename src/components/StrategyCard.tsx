@@ -51,15 +51,26 @@ interface StrategyCardProps {
   strategy: ApiStrategy;
   expiryMs: number;
   onSelect?: (strategy: ApiStrategy) => void;
+  /** Called when user clicks "Vào lệnh" to place the bet */
+  onBet?: (strategy: ApiStrategy) => void;
   isSelected?: boolean;
+  isBetting?: boolean;
 }
 
-export function StrategyCard({ strategy, expiryMs, onSelect, isSelected }: StrategyCardProps) {
+export function StrategyCard({
+  strategy,
+  expiryMs,
+  onSelect,
+  onBet,
+  isSelected,
+  isBetting,
+}: StrategyCardProps) {
   const label = LABELS[strategy.type];
   const description = DESCRIPTIONS[strategy.type];
   const cost = formatDusdc(strategy.cost_raw);
   const payout = formatDusdc(strategy.payout_raw);
   const probPct = (strategy.prob * 100).toFixed(0);
+  const isExpired = expiryMs <= Date.now();
 
   const priceInfo =
     strategy.type === "range" && strategy.lowerStrike_raw && strategy.upperStrike_raw
@@ -71,7 +82,9 @@ export function StrategyCard({ strategy, expiryMs, onSelect, isSelected }: Strat
   return (
     <div
       onClick={() => onSelect?.(strategy)}
-      className={`flex flex-col gap-3 rounded-2xl border p-5 cursor-pointer transition-all ${
+      className={`flex flex-col gap-3 rounded-2xl border p-5 transition-all ${
+        onSelect ? "cursor-pointer" : ""
+      } ${
         isSelected
           ? "border-blue-500 bg-blue-500/10"
           : "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
@@ -107,6 +120,20 @@ export function StrategyCard({ strategy, expiryMs, onSelect, isSelected }: Strat
           <Countdown expiryMs={expiryMs} />
         </div>
       </div>
+
+      {/* T045: "Vào lệnh" bet button — FR-006 pre-validation */}
+      {onBet && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // don't trigger card selection
+            onBet(strategy);
+          }}
+          disabled={isBetting || isExpired}
+          className="mt-1 w-full rounded-xl bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          {isBetting ? "Đang xử lý..." : isExpired ? "Thị trường đã đóng" : "Vào lệnh"}
+        </button>
+      )}
     </div>
   );
 }

@@ -236,13 +236,13 @@
 
 **Spec refs**: FR-006, FR-008, FR-011, SC-005
 
-- [ ] T045 [US3] Add "Vào lệnh" button to `StrategyCard.tsx`. On click: build mint tx (binary or range) via `buildMintTx`, execute via `useExecuteTx`. Pre-validate FR-006 (amount, market open, SVI freshness).
+- [X] T045 [US3] Add "Vào lệnh" button to `StrategyCard.tsx`. On click: build mint tx (binary or range) via `buildMintTx`, execute via `useExecuteTx`. Pre-validate FR-006 (amount, market open, SVI freshness).
   - **Verify**: Button click → wallet popup → tx submitted.
 
-- [ ] T046 [US3] Implement `src/components/TxStatusOverlay.tsx`: overlay states — pending (spinner + "Đang xử lý..."), success (check + digest link), failed (friendly VN error message + "Thử lại"), rejected ("Bạn đã hủy giao dịch" + return to strategies).
+- [X] T046 [US3] Implement `src/components/TxStatusOverlay.tsx`: overlay states — pending (spinner + "Đang xử lý..."), success (check + digest link), failed (friendly VN error message + "Thử lại"), rejected ("Bạn đã hủy giao dịch" + return to strategies).
   - **Verify**: All 3 outcomes display correct overlay; app never freezes (FR-011).
 
-- [ ] T047 [US3] Wire TxStatusOverlay into `/play` page. On success → invalidate balance + positions queries → navigate to /positions. On failure/rejection → dismiss overlay → back to strategy selection.
+- [X] T047 [US3] Wire TxStatusOverlay into `/play` page. On success → invalidate balance + positions queries → navigate to /positions. On failure/rejection → dismiss overlay → back to strategy selection.
   - **Verify**: Success → positions page; rejection → back to strategies; failure → error shown.
 
 **Checkpoint**: US3 UI complete. Full bet placement flow. SC-005 satisfied (win/lose/reject handled).

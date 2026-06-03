@@ -22,10 +22,12 @@ interface StrategyListProps {
   isLoading: boolean;
   data: StrategiesResult | undefined;
   onSelect?: (strategy: ApiStrategy) => void;
+  onBet?: (strategy: ApiStrategy) => void;
+  isBetting?: boolean;
   selectedType?: ApiStrategy["type"] | null;
 }
 
-export function StrategyList({ isLoading, data, onSelect, selectedType }: StrategyListProps) {
+export function StrategyList({ isLoading, data, onSelect, onBet, isBetting, selectedType }: StrategyListProps) {
   // Delay skeleton to 300ms to avoid flash on fast connections (Constitution III)
   const [showSkeleton, setShowSkeleton] = useState(false);
 
@@ -85,6 +87,8 @@ export function StrategyList({ isLoading, data, onSelect, selectedType }: Strate
           strategy={s}
           expiryMs={expiry}
           onSelect={onSelect}
+          onBet={onBet}
+          isBetting={isBetting}
           isSelected={selectedType === s.type}
         />
       ))}

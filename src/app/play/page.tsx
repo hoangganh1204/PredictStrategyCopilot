@@ -3,28 +3,39 @@
 import { useState } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { BalanceDisplay } from "@/components/BalanceDisplay.js";
 import { DepositForm } from "@/components/DepositForm.js";
 import { AmountInput } from "@/components/AmountInput.js";
 import { StrategyList } from "@/components/StrategyList.js";
 import { ConnectButton } from "@/components/ConnectButton.js";
-import { useManagerBalance } from "@/hooks/useManagerBalance.js";
+import { TxStatusOverlay } from "@/components/TxStatusOverlay.js";
+import { useManagerBalance, MANAGER_BALANCE_KEY } from "@/hooks/useManagerBalance.js";
+import { useExecuteTx } from "@/hooks/useExecuteTx.js";
 import { useStrategies, type ExpiryLabel, type ApiStrategy } from "@/hooks/useStrategies.js";
+import { buildBinaryMintTx, buildRangeMintTx } from "@/lib/execute/buildMintTx.js";
+import type { TxResult } from "@/lib/execute/types.js";
+
+// Positions query key for invalidation on successful bet
+const POSITIONS_KEY = ["positions"] as const;
 
 export default function PlayPage() {
   const account = useCurrentAccount();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: balance } = useManagerBalance();
+  const { execute, isPending } = useExecuteTx();
 
   const [amount, setAmount] = useState("");
   const [expiry, setExpiry] = useState<ExpiryLabel>("15m");
   const [submittedAmount, setSubmittedAmount] = useState<number | null>(null);
   const [submittedExpiry, setSubmittedExpiry] = useState<ExpiryLabel | null>(null);
-  const [selectedStrategy, setSelectedStrategy] = useState<ApiStrategy | null>(null);
+  const [overlayResult, setOverlayResult] = useState<TxResult | null>(null);
 
   const { data: strategies, isLoading } = useStrategies(submittedAmount, submittedExpiry);
 
   const maxBalance = balance?.balance_dusdc ?? 0;
+  const managerId = balance?.managerId;
   const hasBalance = maxBalance > 0;
 
   if (!account) {
@@ -41,7 +52,51 @@ export default function PlayPage() {
     if (isNaN(num) || num <= 0) return;
     setSubmittedAmount(num);
     setSubmittedExpiry(expiry);
-    setSelectedStrategy(null);
+  }
+
+  // T045 + T047: build and execute the mint PTB
+  async function handleBet(strategy: ApiStrategy) {
+    if (!managerId || !strategies?.ok) return;
+
+    const { oracle_id, expiry: expiryMs } = strategies;
+    const quantity_raw = BigInt(Math.round((submittedAmount ?? 0) * 1_000_000));
+
+    let tx;
+    if (strategy.type === "range") {
+      if (!strategy.lowerStrike_raw || !strategy.upperStrike_raw) return;
+      tx = buildRangeMintTx({
+        oracleId: oracle_id,
+        managerId,
+        lowerStrike_raw: BigInt(strategy.lowerStrike_raw),
+        upperStrike_raw: BigInt(strategy.upperStrike_raw),
+        quantity_raw,
+        expiryMs,
+      });
+    } else {
+      if (!strategy.strike_raw) return;
+      tx = buildBinaryMintTx({
+        oracleId: oracle_id,
+        managerId,
+        strike_raw: BigInt(strategy.strike_raw),
+        isUp: strategy.type === "binary_up",
+        quantity_raw,
+        expiryMs,
+      });
+    }
+
+    // Execute — invalidate balance + positions on success
+    const result = await execute(tx, [
+      [...MANAGER_BALANCE_KEY, account?.address],
+      [...POSITIONS_KEY, account?.address],
+    ]);
+    setOverlayResult(result);
+  }
+
+  function handleOverlayDismiss() {
+    if (overlayResult?.status === "success") {
+      router.push("/positions");
+    }
+    setOverlayResult(null);
   }
 
   return (
@@ -80,25 +135,30 @@ export default function PlayPage() {
         </div>
       )}
 
-      {/* Strategy list */}
+      {/* Strategy list with bet buttons */}
       {(submittedAmount || isLoading) && (
         <StrategyList
           isLoading={isLoading}
           data={strategies}
-          onSelect={setSelectedStrategy}
-          selectedType={selectedStrategy?.type ?? null}
+          onBet={handleBet}
+          isBetting={isPending}
         />
       )}
 
       {/* Navigate to positions */}
-      {!isLoading && strategies?.ok && (
-        <button
-          onClick={() => router.push("/positions")}
-          className="text-sm text-zinc-500 hover:text-zinc-300 text-center transition-colors"
-        >
-          Xem vị thế đang mở →
-        </button>
-      )}
+      <button
+        onClick={() => router.push("/positions")}
+        className="text-sm text-zinc-500 hover:text-zinc-300 text-center transition-colors"
+      >
+        Xem vị thế đang mở →
+      </button>
+
+      {/* T047: TxStatusOverlay — pending/success/failed/rejected */}
+      <TxStatusOverlay
+        isPending={isPending}
+        result={overlayResult}
+        onDismiss={handleOverlayDismiss}
+      />
     </main>
   );
 }
