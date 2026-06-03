@@ -257,16 +257,16 @@
 
 **Spec refs**: FR-007, FR-010
 
-- [ ] T048 [P] [US4] Implement `src/hooks/usePositions.ts`: TanStack Query hook calling `GET /managers/:id/positions/summary`. Return typed `Position[]`. staleTime 5s. Map position status to `PositionState` enum.
+- [X] T048 [P] [US4] Implement `src/hooks/usePositions.ts`: TanStack Query hook calling `GET /managers/:id/positions/summary`. Return typed `Position[]`. staleTime 5s. Map position status to `PositionState` enum.
   - **Verify**: Hook returns positions for connected wallet's manager.
 
-- [ ] T049 [P] [US4] Implement `src/components/PositionCard.tsx`: display one position. Show: bet type (plain language), status badge (Đang hoạt động / Chờ chốt / Thắng / Thua / Đã nhận), P&L in DUSDC (FR-010), countdown to settlement. Countdown uses `oracle.expiry` in correct unit (from probe).
+- [X] T049 [P] [US4] Implement `src/components/PositionCard.tsx`: display one position. Show: bet type (plain language), status badge (Đang hoạt động / Chờ chốt / Thắng / Thua / Đã nhận), P&L in DUSDC (FR-010), countdown to settlement. Countdown uses `oracle.expiry` in correct unit (from probe).
   - **Verify**: Card renders all fields; countdown ticks in real-time.
 
-- [ ] T050 [US4] Implement `src/components/PositionList.tsx`: list of PositionCards. Empty state: "Chưa có vị thế nào" + CTA link to /play. Loading state after 300ms.
+- [X] T050 [US4] Implement `src/components/PositionList.tsx`: list of PositionCards. Empty state: "Chưa có vị thế nào" + CTA link to /play. Loading state after 300ms.
   - **Verify**: Empty state shows when no positions; list shows when positions exist.
 
-- [ ] T051 [US4] Implement `src/app/positions/page.tsx`: compose PositionList. Include BalanceDisplay at top. Navigation back to /play.
+- [X] T051 [US4] Implement `src/app/positions/page.tsx`: compose PositionList. Include BalanceDisplay at top. Navigation back to /play.
   - **Verify**: Page loads, shows real positions from testnet, countdown works.
 
 **Checkpoint**: US4 complete. Position tracking with real-time P&L and countdown. FR-007 satisfied.
