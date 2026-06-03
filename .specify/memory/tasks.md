@@ -19,19 +19,19 @@
 
 **Purpose**: Scaffold Next.js project, install dependencies, configure tooling.
 
-- [ ] T001 [P] Init Next.js 14 project with `pnpm create next-app --typescript --app --tailwind` in repo root. Configure `tsconfig.json`: `strict: true`, `target: ES2022`, `moduleResolution: NodeNext`, path alias `@/* → src/*`.
+- [X] T001 [P] Init Next.js 14 project with `pnpm create next-app --typescript --app --tailwind` in repo root. Configure `tsconfig.json`: `strict: true`, `target: ES2022`, `moduleResolution: NodeNext`, path alias `@/* → src/*`.
   - **Verify**: `pnpm dev` starts without errors; `tsc --noEmit` passes.
 
-- [ ] T002 [P] Install runtime dependencies: `@mysten/sui`, `@mysten/dapp-kit`, `@tanstack/react-query`. Pin `@mysten/sui` and `@mysten/dapp-kit` to same major version. Verify Sui Testnet compatibility.
+- [X] T002 [P] Install runtime dependencies: `@mysten/sui`, `@mysten/dapp-kit`, `@tanstack/react-query`. Pin `@mysten/sui` and `@mysten/dapp-kit` to same major version. Verify Sui Testnet compatibility.
   - **Verify**: `pnpm ls @mysten/sui @mysten/dapp-kit` shows matching major versions.
 
-- [ ] T003 [P] Install dev dependencies: `vitest`, `@testing-library/react`, `msw` (for API mocks). Configure `vitest.config.ts` with path aliases matching tsconfig.
+- [X] T003 [P] Install dev dependencies: `vitest`, `@testing-library/react`, `msw` (for API mocks). Configure `vitest.config.ts` with path aliases matching tsconfig.
   - **Verify**: `pnpm vitest run` exits 0 (no tests yet, but config valid).
 
-- [ ] T004 Create `src/config/predict.ts` with all on-chain constants from plan (PREDICT_PACKAGE, REGISTRY, PREDICT_OBJECT, DUSDC_TYPE, DUSDC_DECIMALS, CLOCK_OBJECT, DUSDC_CURRENCY_ID, SERVER_URL). Export as `PREDICT_CONFIG` const object.
+- [X] T004 Create `src/config/predict.ts` with all on-chain constants from plan (PREDICT_PACKAGE, REGISTRY, PREDICT_OBJECT, DUSDC_TYPE, DUSDC_DECIMALS, CLOCK_OBJECT, DUSDC_CURRENCY_ID, SERVER_URL). Export as `PREDICT_CONFIG` const object.
   - **Verify**: `tsc --noEmit` passes; constants match plan exactly.
 
-- [ ] T005 Create directory structure: `src/lib/strategy/`, `src/lib/execute/`, `src/types/`, `src/hooks/`, `src/components/`, `scripts/`, `tests/unit/strategy/`, `tests/unit/`, `tests/integration/`.
+- [X] T005 Create directory structure: `src/lib/strategy/`, `src/lib/execute/`, `src/types/`, `src/hooks/`, `src/components/`, `scripts/`, `tests/unit/strategy/`, `tests/unit/`, `tests/integration/`.
   - **Verify**: `ls -R src/lib src/types src/hooks src/components scripts tests` shows expected dirs.
 
 **Checkpoint**: Project compiles, dev server runs, test runner configured, config in place.
