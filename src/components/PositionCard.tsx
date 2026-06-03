@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Position } from "@/hooks/usePositions.js";
 import type { PositionState } from "@/lib/execute/types.js";
-
-const DUSDC_SCALE = 1_000_000;
-const PRICE_SCALE = 1_000_000_000;
+import { formatDusdcNumber, formatPrice } from "@/lib/format.js";
 
 const STATUS_LABELS: Record<PositionState, string> = {
   active:              "Đang hoạt động",
@@ -23,15 +21,6 @@ const STATUS_COLORS: Record<PositionState, string> = {
   redeemed:            "bg-zinc-700 text-zinc-400",
 };
 
-function formatDusdc(raw: number | undefined): string {
-  if (raw === undefined) return "—";
-  return (raw / DUSDC_SCALE).toFixed(2);
-}
-
-function formatPrice(raw: number | undefined): string {
-  if (!raw) return "—";
-  return `$${(raw / PRICE_SCALE).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-}
 
 function getBetTypeLabel(pos: Position): string {
   if (pos.direction === "up") return "Đặt giá lên";
@@ -103,7 +92,7 @@ export function PositionCard({ position, onRedeem, isRedeeming }: PositionCardPr
           <div>
             <div className="text-xs text-zinc-500">Số lượng</div>
             <div className="font-mono text-sm text-zinc-200">
-              {formatDusdc(position.quantity)} DUSDC
+              {formatDusdcNumber(position.quantity)}
             </div>
           </div>
           {positionState === "settled_won" && (

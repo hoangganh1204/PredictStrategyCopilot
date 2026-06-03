@@ -2,9 +2,9 @@
 // FR-009: plain Vietnamese labels — no option jargon.
 import { useEffect, useState } from "react";
 import type { ApiStrategy } from "@/hooks/useStrategies.js";
+import { formatPrice } from "@/lib/format.js";
 
 const DUSDC_SCALE = 1_000_000;
-const PRICE_SCALE = 1_000_000_000;
 
 const LABELS: Record<ApiStrategy["type"], string> = {
   range: "Đặt giá đứng yên",
@@ -19,11 +19,7 @@ const DESCRIPTIONS: Record<ApiStrategy["type"], string> = {
 };
 
 function formatDusdc(raw: string): string {
-  return (Number(raw) / DUSDC_SCALE).toFixed(2);
-}
-
-function formatPrice(raw: string): string {
-  return `$${(Number(raw) / PRICE_SCALE).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+  return `${(Number(raw) / DUSDC_SCALE).toFixed(2)} DUSDC`;
 }
 
 function Countdown({ expiryMs }: { expiryMs: number }) {
@@ -74,9 +70,9 @@ export function StrategyCard({
 
   const priceInfo =
     strategy.type === "range" && strategy.lowerStrike_raw && strategy.upperStrike_raw
-      ? `${formatPrice(strategy.lowerStrike_raw)} – ${formatPrice(strategy.upperStrike_raw)}`
+      ? `${formatPrice(Number(strategy.lowerStrike_raw))} – ${formatPrice(Number(strategy.upperStrike_raw))}`
       : strategy.strike_raw
-      ? formatPrice(strategy.strike_raw)
+      ? formatPrice(Number(strategy.strike_raw))
       : null;
 
   return (
@@ -108,11 +104,11 @@ export function StrategyCard({
         <div className="flex gap-4">
           <div>
             <div className="text-xs text-zinc-500">Chi phí</div>
-            <div className="font-mono text-sm text-zinc-200">{cost} DUSDC</div>
+            <div className="font-mono text-sm text-zinc-200">{cost}</div>
           </div>
           <div>
             <div className="text-xs text-zinc-500">Thưởng nếu thắng</div>
-            <div className="font-mono text-sm text-green-400">{payout} DUSDC</div>
+            <div className="font-mono text-sm text-green-400">{payout}</div>
           </div>
         </div>
         <div className="text-right">

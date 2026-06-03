@@ -298,19 +298,19 @@
 
 **Purpose**: Edge cases, error handling, final validation.
 
-- [ ] T055 [P] Add global error boundary in `layout.tsx`: catch unhandled errors → friendly message, no white screen.
+- [X] T055 [P] Add global error boundary in `layout.tsx`: catch unhandled errors → friendly message, no white screen.
   - **Verify**: Throw error in component → error boundary catches, shows recovery UI.
 
-- [ ] T056 [P] Validate FR-009 compliance: audit all user-facing text. Remove any "strike price", "implied volatility", "vol curve", "expiry" — replace with plain Vietnamese equivalents.
+- [X] T056 [P] Validate FR-009 compliance: audit all user-facing text. Remove any "strike price", "implied volatility", "vol curve", "expiry" — replace with plain Vietnamese equivalents.
   - **Verify**: Grep codebase for option jargon → 0 matches in components/.
 
-- [ ] T057 [P] Validate FR-010 compliance: audit all DUSDC display. Ensure: always 2 decimal places, "DUSDC" unit label, no floating point artifacts. Add helper `formatDusdc(amount_raw: bigint): string`.
+- [X] T057 [P] Validate FR-010 compliance: audit all DUSDC display. Ensure: always 2 decimal places, "DUSDC" unit label, no floating point artifacts. Add helper `formatDusdc(amount_raw: bigint): string`.
   - **Verify**: All money displays show "XX.XX DUSDC" format.
 
-- [ ] T058 Validate SC-006: test all "no market" scenarios. For each expiry (15m/30m/1h), if no market → confirm friendly message (not empty list, not technical error).
+- [X] T058 Validate SC-006: test all "no market" scenarios. For each expiry (15m/30m/1h), if no market → confirm friendly message (not empty list, not technical error).
   - **Verify**: Deliberately pick closed expiry → message "Hiện không có thị trường mở cho khung này".
 
-- [ ] T059 End-to-end manual test: fresh wallet → connect → deposit → pick strategy → place bet → track position → redeem. Target: < 5 minutes (SC-001).
+- [X] T059 End-to-end manual test: fresh wallet → connect → deposit → pick strategy → place bet → track position → redeem. Target: < 5 minutes (SC-001).
   - **Verify**: Timed walkthrough under 5 minutes without external docs.
 
 ---
