@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "probe": "tsx scripts/probe.ts"
   },
   "dependencies": {
     "@mysten/dapp-kit": "^1.0.6",
@@ -31,6 +32,7 @@
     "jsdom": "^29.1.1",
     "msw": "^2.14.6",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5",
     "vite": "^4.5.14",
     "vitest": "^1.6.1"

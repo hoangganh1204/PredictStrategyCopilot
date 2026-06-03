@@ -44,34 +44,34 @@
 
 **CRITICAL**: No Phase 3+ task may begin until ALL probe items are verified.
 
-- [ ] T006 Write `scripts/probe.ts` skeleton: import SuiClient, fetch from PREDICT_CONFIG.SERVER_URL. Add functions for each probe item. Setup `tsx` runner in `package.json` scripts.
+- [X] T006 Write `scripts/probe.ts` skeleton: import SuiClient, fetch from PREDICT_CONFIG.SERVER_URL. Add functions for each probe item. Setup `tsx` runner in `package.json` scripts.
   - **Verify**: `pnpm tsx scripts/probe.ts` runs (may have empty output).
 
-- [ ] T007 [P] Probe item #6: Fetch all Public Server endpoints and log JSON shape. Endpoints: `GET /predicts/:predict_id/oracles`, `GET /oracles/:oracle_id/state`, `GET /oracles/:oracle_id/svi/latest`, `GET /oracles/:oracle_id/ask-bounds`, `GET /managers/:manager_id/summary`, `GET /managers/:manager_id/positions/summary`. Log full response JSON to console.
+- [X] T007 [P] Probe item #6: Fetch all Public Server endpoints and log JSON shape. Endpoints: `GET /predicts/:predict_id/oracles`, `GET /oracles/:oracle_id/state`, `GET /oracles/:oracle_id/svi/latest`, `GET /oracles/:oracle_id/ask-bounds`, `GET /managers/:manager_id/summary`, `GET /managers/:manager_id/positions/summary`. Log full response JSON to console.
   - **Verify**: Console output shows real JSON from each endpoint; save sample responses.
 
-- [ ] T008 Create `src/types/predict-server.ts` — define TypeScript interfaces matching JSON shapes from T007. Types: `OracleListResponse`, `OracleStateResponse`, `SviLatestResponse`, `AskBoundsResponse`, `ManagerSummaryResponse`, `PositionsSummaryResponse`.
+- [X] T008 Create `src/types/predict-server.ts` — define TypeScript interfaces matching JSON shapes from T007. Types: `OracleListResponse`, `OracleStateResponse`, `SviLatestResponse`, `AskBoundsResponse`, `ManagerSummaryResponse`, `PositionsSummaryResponse`.
   - **Verify**: `tsc --noEmit` passes; types match actual endpoint output.
 
-- [ ] T009 [P] Probe item #1 + #2: Verify `MarketKey` and `RangeKey` constructors from predict.move source (branch predict-testnet-4-16). Log exact function name, parameter names, and parameter types. Update `scripts/probe.ts` to construct a sample key.
+- [X] T009 [P] Probe item #1 + #2: Verify `MarketKey` and `RangeKey` constructors from predict.move source (branch predict-testnet-4-16). Log exact function name, parameter names, and parameter types. Update `scripts/probe.ts` to construct a sample key.
   - **Verify**: Console output shows constructor signatures; document in probe output.
 
-- [ ] T010 [P] Probe item #3: Verify scale factors of u64 fields. Test: read oracle state, SVI params, and ask-bounds. Log raw values. Identify which fields are u64, which are I64 (signed). Document: quantity scale, cost scale, strike scale, SVI `a`/`b`/`sigma` scale vs `rho`/`m` I64 encoding.
+- [X] T010 [P] Probe item #3: Verify scale factors of u64 fields. Test: read oracle state, SVI params, and ask-bounds. Log raw values. Identify which fields are u64, which are I64 (signed). Document: quantity scale, cost scale, strike scale, SVI `a`/`b`/`sigma` scale vs `rho`/`m` I64 encoding.
   - **Verify**: Scale factors documented; can convert a known cost_raw → cost_dusdc correctly.
 
-- [ ] T011 [P] Probe item #5: Verify `oracle.expiry` unit. Fetch oracle state → compare `expiry` field with `Date.now()`. Determine if milliseconds or seconds.
+- [X] T011 [P] Probe item #5: Verify `oracle.expiry` unit. Fetch oracle state → compare `expiry` field with `Date.now()`. Determine if milliseconds or seconds.
   - **Verify**: `expiry` unit documented; expiry compared to current time gives sensible TTL.
 
-- [ ] T012 [P] Probe item #4: Verify how to get valid strike grid. Fetch ask-bounds for an active oracle → determine if grid is explicit list or computed from bounds + step. Document grid resolution.
+- [X] T012 [P] Probe item #4: Verify how to get valid strike grid. Fetch ask-bounds for an active oracle → determine if grid is explicit list or computed from bounds + step. Document grid resolution.
   - **Verify**: Can enumerate all valid strike prices for an active oracle.
 
-- [ ] T013 Probe item #7: Verify SVI `w(k)` convention. Compute `w` from SVI params at ATM (k=0). Compare `w / timeToExpiry` against known implied vol range for BTC. Determine: total variance (`σ²T`) or instantaneous (`σ²`).
+- [X] T013 Probe item #7: Verify SVI `w(k)` convention. Compute `w` from SVI params at ATM (k=0). Compare `w / timeToExpiry` against known implied vol range for BTC. Determine: total variance (`σ²T`) or instantaneous (`σ²`).
   - **Verify**: `computeImpliedVol` formula determined: `√(w/T)` or `√w`. Document with numeric evidence.
 
-- [ ] T014 Probe item #8: Verify `devInspectTransactionBlock` works with `predict::get_trade_amounts`. Build a dry-run PTB calling `get_trade_amounts` with real oracle + a valid strike + quantity=1. Parse return values (mint_cost, redeem_payout).
+- [X] T014 Probe item #8: Verify `devInspectTransactionBlock` works with `predict::get_trade_amounts`. Build a dry-run PTB calling `get_trade_amounts` with real oracle + a valid strike + quantity=1. Parse return values (mint_cost, redeem_payout).
   - **Verify**: devInspect returns numeric values that match expected cost/payout for a minimal trade.
 
-- [ ] T015 Update `src/config/predict.ts` and `src/types/predict-server.ts` with all findings from T007–T014. Add scale factor constants, expiry unit, SVI convention comment, MarketKey/RangeKey constructor patterns.
+- [X] T015 Update `src/config/predict.ts` and `src/types/predict-server.ts` with all findings from T007–T014. Add scale factor constants, expiry unit, SVI convention comment, MarketKey/RangeKey constructor patterns.
   - **Verify**: `tsc --noEmit` passes; all probe findings encoded in code/types/comments.
 
 **Checkpoint**: All 8 probe items resolved. Types match real data. Scale factors documented. `computeImpliedVol` formula determined. devInspect verified. MS1 can begin.
