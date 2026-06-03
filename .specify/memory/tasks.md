@@ -281,13 +281,13 @@
 
 **Spec refs**: FR-007 (full lifecycle), FR-012, SC-004
 
-- [ ] T052 [US5] Add redeem button to `PositionCard.tsx`: visible only when status = `settled_won`. On click → `buildRedeemTx` → `useExecuteTx`. Show TxStatusOverlay.
+- [X] T052 [US5] Add redeem button to `PositionCard.tsx`: visible only when status = `settled_won`. On click → `buildRedeemTx` → `useExecuteTx`. Show TxStatusOverlay.
   - **Verify**: Button appears only for won positions; click → wallet popup.
 
-- [ ] T053 [US5] Handle redeem outcomes: success → update position status to "Đã nhận thưởng", invalidate balance query. Failure → friendly error. For lost positions: show "Lần này không trúng" + link to /play for new strategies.
+- [X] T053 [US5] Handle redeem outcomes: success → update position status to "Đã nhận thưởng", invalidate balance query. Failure → friendly error. For lost positions: show "Lần này không trúng" + link to /play for new strategies.
   - **Verify**: Win → redeem → balance increases; loss → correct message shown.
 
-- [ ] T054 [US5] Integration test: run full lifecycle on testnet. Place binary bet → wait for settlement → redeem if won. Place range bet → verify. (Manual test, use `scripts/e2e-execute.ts` as base.)
+- [X] T054 [US5] Integration test: run full lifecycle on testnet. Place binary bet → wait for settlement → redeem if won. Place range bet → verify. (Manual test, use `scripts/e2e-execute.ts` as base.)
   - **Verify**: SC-004 met: at least 1 binary + 1 range bet placed and redeemed on testnet.
 
 **Checkpoint**: US5 complete. Full lifecycle: bet → track → redeem. SC-004, FR-007, FR-012 satisfied.
