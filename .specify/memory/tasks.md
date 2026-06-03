@@ -186,13 +186,13 @@
 
 ### Phase 5A — UI Shell (parallel with Phase 3)
 
-- [ ] T034 [P] [US1] Implement `src/app/layout.tsx`: wrap app with `SuiClientProvider` (Sui Testnet), `WalletProvider` (dapp-kit), `QueryClientProvider` (TanStack Query). Configure Tailwind.
+- [X] T034 [P] [US1] Implement `src/app/layout.tsx`: wrap app with `SuiClientProvider` (Sui Testnet), `WalletProvider` (dapp-kit), `QueryClientProvider` (TanStack Query). Configure Tailwind.
   - **Verify**: `pnpm dev` → app loads without provider errors in console.
 
-- [ ] T035 [P] [US1] Implement `src/components/ConnectButton.tsx`: wrap dapp-kit `ConnectButton` or build custom. Show truncated address after connect. Handle disconnect.
+- [X] T035 [P] [US1] Implement `src/components/ConnectButton.tsx`: wrap dapp-kit `ConnectButton` or build custom. Show truncated address after connect. Handle disconnect.
   - **Verify**: Click → wallet popup → address shown; disconnect works.
 
-- [ ] T039 [P] [US1] Implement `src/app/page.tsx` (landing): show ConnectButton if not connected. After connect → redirect to `/play`.
+- [X] T039 [P] [US1] Implement `src/app/page.tsx` (landing): show ConnectButton if not connected. After connect → redirect to `/play`.
   - **Verify**: Fresh visit → connect button; after connect → navigated to /play.
 
 ### Phase 5B — Balance & Deposit (after Phase 4: T028, T029)
