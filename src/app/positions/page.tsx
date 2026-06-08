@@ -1,12 +1,11 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { usePositions, POSITIONS_KEY } from "@/hooks/usePositions.js";
 import { useManagerBalance, MANAGER_BALANCE_KEY } from "@/hooks/useManagerBalance.js";
 import { useExecuteTx } from "@/hooks/useExecuteTx.js";
 import { buildRedeemTx } from "@/lib/execute/buildRedeemTx.js";
-import { BalanceDisplay } from "@/components/BalanceDisplay.js";
+import { AppHeader } from "@/components/AppHeader.js";
 import { ConnectButton } from "@/components/ConnectButton.js";
 import { PositionList } from "@/components/PositionList.js";
 import { TxStatusOverlay } from "@/components/TxStatusOverlay.js";
@@ -22,10 +21,13 @@ export default function PositionsPage() {
 
   if (!account) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
-        <p className="text-zinc-400">Kết nối ví để xem vị thế</p>
-        <ConnectButton />
-      </main>
+      <>
+        <AppHeader />
+        <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
+          <p className="text-zinc-400">Kết nối ví để xem vị thế</p>
+          <ConnectButton />
+        </main>
+      </>
     );
   }
 
@@ -35,10 +37,6 @@ export default function PositionsPage() {
 
     const isRange = pos.lower_strike !== undefined && pos.higher_strike !== undefined;
 
-    // oracle_id and expiry from position — expiry may come from joined data
-    const expiryMs: number = (pos as Record<string, unknown>).expiry as number
-      ?? Date.now() + 900_000;
-
     const tx = buildRedeemTx({
       oracleId: pos.oracle_id,
       managerId,
@@ -46,8 +44,8 @@ export default function PositionsPage() {
       isUp: pos.direction === "up",
       lowerStrike_raw: pos.lower_strike !== undefined ? BigInt(pos.lower_strike) : undefined,
       upperStrike_raw: pos.higher_strike !== undefined ? BigInt(pos.higher_strike) : undefined,
-      quantity_raw: BigInt(pos.quantity),
-      expiryMs,
+      quantity_raw: BigInt(pos.open_quantity),
+      expiryMs: pos.expiry,
       isRange,
     });
 
@@ -58,39 +56,41 @@ export default function PositionsPage() {
     setOverlayResult(result);
   }
 
+  const activeCount = positions?.filter(
+    (p) => p.positionState === "active" || p.positionState === "awaiting_settlement"
+  ).length ?? 0;
+  const claimableCount = positions?.filter((p) => p.positionState === "settled_won").length ?? 0;
+
   return (
-    <main className="flex flex-1 flex-col max-w-lg mx-auto w-full px-4 py-8 gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-zinc-100">Vị thế của tôi</h1>
-        <div className="flex items-center gap-3">
-          <BalanceDisplay />
-          <ConnectButton />
+    <>
+      <AppHeader />
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
+        {/* Title */}
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-bold tracking-tight text-zinc-100">Vị thế của tôi</h1>
+          <p className="text-sm text-zinc-500">
+            {activeCount} đang chạy
+            {claimableCount > 0 && (
+              <span className="text-emerald-400"> · {claimableCount} chờ nhận thưởng</span>
+            )}
+          </p>
         </div>
-      </div>
 
-      {/* Position list */}
-      <PositionList
-        isLoading={isLoading}
-        positions={positions}
-        onRedeem={handleRedeem}
-        isRedeeming={isPending}
-      />
+        {/* Position list */}
+        <PositionList
+          isLoading={isLoading}
+          positions={positions}
+          onRedeem={handleRedeem}
+          isRedeeming={isPending}
+        />
 
-      {/* Back to play */}
-      <Link
-        href="/play"
-        className="text-sm text-zinc-500 hover:text-zinc-300 text-center transition-colors"
-      >
-        ← Quay lại đặt lệnh
-      </Link>
-
-      {/* Redeem status overlay */}
-      <TxStatusOverlay
-        isPending={isPending}
-        result={overlayResult}
-        onDismiss={() => setOverlayResult(null)}
-      />
-    </main>
+        {/* Redeem status overlay */}
+        <TxStatusOverlay
+          isPending={isPending}
+          result={overlayResult}
+          onDismiss={() => setOverlayResult(null)}
+        />
+      </main>
+    </>
   );
 }

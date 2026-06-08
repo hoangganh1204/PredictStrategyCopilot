@@ -34,11 +34,19 @@ export function TxStatusOverlay({ isPending, result, onDismiss }: TxStatusOverla
             </div>
             <p className="text-zinc-200 font-medium">Giao dịch thành công!</p>
             {result.digest && (
-              <p className="text-zinc-500 text-xs font-mono break-all">
-                {result.digest.slice(0, 16)}...
-              </p>
+              <a
+                href={`https://suiscan.xyz/testnet/tx/${result.digest}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                Xem trên explorer
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
             )}
-            <button onClick={onDismiss} className="mt-2 rounded-full bg-zinc-800 px-5 py-2 text-sm text-zinc-300 hover:bg-zinc-700 transition-colors">
+            <button onClick={onDismiss} className="btn-primary mt-2 rounded-full px-6 py-2 text-sm font-medium text-white transition-all">
               Đóng
             </button>
           </>

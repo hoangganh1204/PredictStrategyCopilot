@@ -31,9 +31,13 @@ export function PositionList({ isLoading, positions, onRedeem, isRedeeming }: Po
   const [showSkeleton, setShowSkeleton] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) { setShowSkeleton(false); return; }
+    if (!isLoading) return;
     const id = setTimeout(() => setShowSkeleton(true), 300);
-    return () => clearTimeout(id);
+    // Reset on cleanup (runs when loading ends or component unmounts).
+    return () => {
+      clearTimeout(id);
+      setShowSkeleton(false);
+    };
   }, [isLoading]);
 
   if (isLoading) {
@@ -64,7 +68,7 @@ export function PositionList({ isLoading, positions, onRedeem, isRedeeming }: Po
     <div className="flex flex-col gap-3">
       {positions.map((pos, idx) => (
         <PositionCard
-          key={`${pos.oracle_id}-${pos.strike ?? pos.lower_strike ?? idx}`}
+          key={`${pos.oracle_id}-${pos.expiry}-${pos.strike ?? pos.lower_strike ?? idx}`}
           position={pos}
           onRedeem={onRedeem}
           isRedeeming={isRedeeming}

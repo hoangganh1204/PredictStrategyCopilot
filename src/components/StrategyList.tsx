@@ -21,23 +21,26 @@ function CardSkeleton() {
 interface StrategyListProps {
   isLoading: boolean;
   data: StrategiesResult | undefined;
+  /** DUSDC the user wants to spend — scales each card's cost/win/profit. */
+  stakeDusdc: number;
   onSelect?: (strategy: ApiStrategy) => void;
   onBet?: (strategy: ApiStrategy) => void;
   isBetting?: boolean;
   selectedType?: ApiStrategy["type"] | null;
 }
 
-export function StrategyList({ isLoading, data, onSelect, onBet, isBetting, selectedType }: StrategyListProps) {
+export function StrategyList({ isLoading, data, stakeDusdc, onSelect, onBet, isBetting, selectedType }: StrategyListProps) {
   // Delay skeleton to 300ms to avoid flash on fast connections (Constitution III)
   const [showSkeleton, setShowSkeleton] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
-      setShowSkeleton(false);
-      return;
-    }
+    if (!isLoading) return;
     const id = setTimeout(() => setShowSkeleton(true), 300);
-    return () => clearTimeout(id);
+    // Reset on cleanup (runs when loading ends or component unmounts).
+    return () => {
+      clearTimeout(id);
+      setShowSkeleton(false);
+    };
   }, [isLoading]);
 
   if (isLoading) {
@@ -86,6 +89,7 @@ export function StrategyList({ isLoading, data, onSelect, onBet, isBetting, sele
           key={`${s.type}-${s.strike_raw ?? s.lowerStrike_raw}`}
           strategy={s}
           expiryMs={expiry}
+          stakeDusdc={stakeDusdc}
           onSelect={onSelect}
           onBet={onBet}
           isBetting={isBetting}

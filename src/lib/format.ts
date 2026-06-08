@@ -1,6 +1,7 @@
 // Shared display formatting helpers (FR-010: always 2 decimal places + DUSDC label).
+import { DUSDC_SCALE as DUSDC_SCALE_RAW } from "@/config/predict.js";
 
-const DUSDC_SCALE = 1_000_000;
+const DUSDC_SCALE = Number(DUSDC_SCALE_RAW);
 
 /**
  * Format a raw DUSDC bigint amount for display.
@@ -20,6 +21,20 @@ export function formatDusdcNumber(amount_raw: number | undefined): string {
   if (amount_raw === undefined) return "—";
   const value = amount_raw / DUSDC_SCALE;
   return `${value.toFixed(2)} DUSDC`;
+}
+
+/**
+ * Format remaining milliseconds as a countdown label.
+ * ≥1h → "2h 05m"; otherwise "MM:SS".
+ */
+export function formatCountdown(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return h > 0
+    ? `${h}h ${String(m).padStart(2, "0")}m`
+    : `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
 /**

@@ -4,7 +4,7 @@ import { useManagerBalance } from "@/hooks/useManagerBalance.js";
 import { formatDusdc } from "@/lib/format.js";
 
 function Skeleton() {
-  return <div className="h-5 w-28 animate-pulse rounded bg-zinc-700" />;
+  return <div className="h-4 w-16 animate-pulse rounded bg-zinc-700" />;
 }
 
 export function BalanceDisplay() {
