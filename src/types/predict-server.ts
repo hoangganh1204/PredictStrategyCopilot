@@ -102,24 +102,39 @@ export interface AskBoundsResponse {
 export interface ManagerSummaryResponse {
   manager_id: string;
   owner: string;
-  /** Balance in raw DUSDC (scale 1e6) */
-  balance: number;
+  /** Top-level balance in raw DUSDC (scale 1e6) — server field is trading_balance */
+  trading_balance: number;
+  balances?: Array<{ quote_asset: string; balance: number }>;
   [key: string]: unknown;
 }
 
 // ─── GET /managers/:manager_id/positions/summary ──────────────────────────────
 
 export interface PositionSummaryItem {
+  predict_id: string;
   manager_id: string;
   oracle_id: string;
+  underlying_asset: string;
+  /** Unix ms timestamp */
+  expiry: number;
   /** Scale: 1e9 */
   strike?: number;
   /** Scale: 1e9 */
   lower_strike?: number;
   /** Scale: 1e9 */
   higher_strike?: number;
-  direction?: "up" | "down";
-  quantity: number;
+  /** Binary direction — true=up, false=down, absent for range */
+  is_up?: boolean;
+  /** Total tokens minted (scale: 1e6) */
+  minted_quantity: number;
+  /** Currently held tokens (scale: 1e6) */
+  open_quantity: number;
+  /** Total DUSDC paid (scale: 1e6) */
+  total_cost: number;
+  /** Unrealized P&L in raw DUSDC (scale: 1e6) */
+  unrealized_pnl: number;
+  /** Realized P&L in raw DUSDC (scale: 1e6) */
+  realized_pnl: number;
   status: "active" | "awaiting_settlement" | "settled_won" | "settled_lost" | "redeemed";
   [key: string]: unknown;
 }

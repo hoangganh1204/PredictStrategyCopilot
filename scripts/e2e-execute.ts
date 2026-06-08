@@ -1,5 +1,5 @@
 /**
- * End-to-end testnet execution script: findOrCreateManager → deposit → mint → verify.
+ * End-to-end testnet execution script: getOrCreateManager → deposit → mint → verify.
  *
  * Security: private key loaded from env var TEST_KEYPAIR or .env.local — NEVER hardcode.
  * Usage:
@@ -15,6 +15,7 @@ import { PREDICT_CONFIG } from "../src/config/predict.js";
 import { fetchOracleList, fetchOracleState, fetchSviLatest } from "../src/lib/predict-client.js";
 import { buildBinaryMintTx } from "../src/lib/execute/buildMintTx.js";
 import { buildDepositTxFromCoin } from "../src/lib/execute/depositDusdc.js";
+import { findManagerId } from "../src/lib/execute/findManager.js";
 import type { TxResult } from "../src/lib/execute/types.js";
 
 // ─── Keypair from env ─────────────────────────────────────────────────────────
@@ -60,18 +61,12 @@ async function signAndExecute(tx: Transaction): Promise<TxResult> {
 
 async function getOrCreateManager(): Promise<string> {
   console.log("Step 1: Finding PredictManager...");
-  const managerType = `${PREDICT_CONFIG.PACKAGE}::predict_manager::PredictManager`;
 
-  const objects = await client.getOwnedObjects({
-    owner: walletAddress,
-    filter: { StructType: managerType },
-    options: { showType: true },
-  });
-
-  if (objects.data.length > 0) {
-    const id = objects.data[0].data?.objectId ?? "";
-    console.log(`  Found: ${id}`);
-    return id;
+  // PredictManager is a SHARED object — discover via creation event, not owned objects.
+  const existing = await findManagerId(client, walletAddress);
+  if (existing) {
+    console.log(`  Found: ${existing}`);
+    return existing;
   }
 
   console.log("  Not found. Creating PredictManager...");
@@ -85,15 +80,16 @@ async function getOrCreateManager(): Promise<string> {
   if (result.status !== "success") throw new Error(`create_manager failed: ${result.error}`);
   console.log(`  Created. Digest: ${result.digest}`);
 
-  // Re-query
-  const after = await client.getOwnedObjects({
-    owner: walletAddress,
-    filter: { StructType: managerType },
-    options: { showType: true },
-  });
-  const id = after.data[0]?.data?.objectId ?? "";
-  console.log(`  Manager ID: ${id}`);
-  return id;
+  // Re-query events (indexer may lag a few seconds after the tx)
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const id = await findManagerId(client, walletAddress);
+    if (id) {
+      console.log(`  Manager ID: ${id}`);
+      return id;
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error("PredictManager created but not found via events");
 }
 
 // ─── Step 2: Deposit 1 DUSDC ──────────────────────────────────────────────────

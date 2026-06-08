@@ -4,47 +4,31 @@ import { Transaction } from "@mysten/sui/transactions";
 import { PREDICT_CONFIG } from "@/config/predict.js";
 
 /**
- * Build deposit transaction.
- * Splits `amount_raw` from the primary DUSDC coin and deposits into the manager.
- * Assumes the caller's wallet holds at least one DUSDC coin.
- */
-export function buildDepositTx(managerId: string, amount_raw: bigint): Transaction {
-  const tx = new Transaction();
-
-  // Get DUSDC coins from wallet — use tx.gas for the primary coin merge pattern,
-  // but DUSDC is a custom coin type, so we use the owned-coin approach:
-  const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(amount_raw)]);
-  // Note: tx.gas represents the primary gas coin; for DUSDC we need the actual coin.
-  // The correct pattern for non-SUI coins is to use MoveCall with the coin object directly.
-  // Here we build the PTB expecting the caller to pass in the DUSDC coin object.
-  // We expose a variant that accepts the coin object ID for proper DUSDC handling.
-
-  tx.moveCall({
-    target: `${PREDICT_CONFIG.PACKAGE}::predict_manager::deposit`,
-    typeArguments: [PREDICT_CONFIG.DUSDC_TYPE],
-    arguments: [
-      tx.object(managerId),
-      coin,
-    ],
-  });
-
-  return tx;
-}
-
-/**
- * Build deposit transaction using an explicit DUSDC coin object.
- * Use this when the caller knows the specific coin object to spend.
+ * Build deposit transaction from one or more DUSDC coin objects.
+ * If several coins are given they are merged first, so a deposit can draw on the
+ * wallet's full DUSDC balance even when it is split across multiple coin objects.
+ * Splits `amount_raw` from the (merged) coin and deposits it into the manager.
  */
 export function buildDepositTxFromCoin(
   managerId: string,
-  dusdcCoinObjectId: string,
+  dusdcCoinObjectIds: string | string[],
   amount_raw: bigint
 ): Transaction {
   const tx = new Transaction();
 
-  const [splitCoin] = tx.splitCoins(tx.object(dusdcCoinObjectId), [
-    tx.pure.u64(amount_raw),
-  ]);
+  const ids = Array.isArray(dusdcCoinObjectIds)
+    ? dusdcCoinObjectIds
+    : [dusdcCoinObjectIds];
+  if (ids.length === 0) {
+    throw new Error("buildDepositTxFromCoin: at least one DUSDC coin is required");
+  }
+
+  const [primary, ...rest] = ids;
+  if (rest.length > 0) {
+    tx.mergeCoins(tx.object(primary), rest.map((id) => tx.object(id)));
+  }
+
+  const [splitCoin] = tx.splitCoins(tx.object(primary), [tx.pure.u64(amount_raw)]);
 
   tx.moveCall({
     target: `${PREDICT_CONFIG.PACKAGE}::predict_manager::deposit`,

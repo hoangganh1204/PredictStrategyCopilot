@@ -23,6 +23,7 @@ import {
 } from "../src/lib/predict-client.js";
 import { buildBinaryMintTx, buildRangeMintTx } from "../src/lib/execute/buildMintTx.js";
 import { buildRedeemTx } from "../src/lib/execute/buildRedeemTx.js";
+import { findManagerId } from "../src/lib/execute/findManager.js";
 import type { TxResult } from "../src/lib/execute/types.js";
 
 // ─── Keypair ─────────────────────────────────────────────────────────────────
@@ -63,13 +64,8 @@ async function signAndExecute(tx: Transaction): Promise<TxResult> {
 // ─── Find manager ────────────────────────────────────────────────────────────
 
 async function getManagerId(): Promise<string | null> {
-  const managerType = `${PREDICT_CONFIG.PACKAGE}::predict_manager::PredictManager`;
-  const objects = await client.getOwnedObjects({
-    owner: walletAddress,
-    filter: { StructType: managerType },
-    options: { showType: true },
-  });
-  return objects.data[0]?.data?.objectId ?? null;
+  // PredictManager is a SHARED object — discover via creation event, not owned objects.
+  return findManagerId(client, walletAddress);
 }
 
 // ─── Place binary bet ─────────────────────────────────────────────────────────
@@ -189,10 +185,10 @@ async function redeemWonPositions(managerId: string, expiryMs: number): Promise<
       oracleId: pos.oracle_id,
       managerId,
       strike_raw: pos.strike !== undefined ? BigInt(pos.strike) : undefined,
-      isUp: pos.direction === "up",
+      isUp: pos.is_up === true,
       lowerStrike_raw: pos.lower_strike !== undefined ? BigInt(pos.lower_strike) : undefined,
       upperStrike_raw: pos.higher_strike !== undefined ? BigInt(pos.higher_strike) : undefined,
-      quantity_raw: BigInt(pos.quantity),
+      quantity_raw: BigInt(pos.open_quantity),
       expiryMs,
       isRange,
     });
@@ -221,7 +217,7 @@ async function main() {
 
   // 2. Check balance
   const summary = await fetchManagerSummary(managerId);
-  const balance_dusdc = summary.balance / 1_000_000;
+  const balance_dusdc = summary.trading_balance / 1_000_000;
   console.log(`Game balance: ${balance_dusdc.toFixed(2)} DUSDC`);
   if (balance_dusdc < 2) {
     console.log("Need at least 2 DUSDC (1 per bet). Deposit first.");

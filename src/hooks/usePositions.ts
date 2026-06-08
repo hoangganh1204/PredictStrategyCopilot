@@ -9,18 +9,28 @@ import type { PositionState } from "@/lib/execute/types.js";
 
 export interface Position extends PositionSummaryItem {
   positionState: PositionState;
+  /** Derived from is_up for display — "up" | "down" | undefined (range) */
+  direction?: "up" | "down";
 }
 
 export const POSITIONS_KEY = ["positions"] as const;
 
-/** Map server status string to PositionState enum. */
+/**
+ * Map the Public Server's position status to our UI PositionState.
+ * Verified server vocabulary (testnet): "active", "redeemable", "lost", "redeemed".
+ * ("redeemable" = won and claimable; "lost" = settled loss.)
+ */
 function toPositionState(status: string): PositionState {
   switch (status) {
-    case "active":             return "active";
-    case "awaiting_settlement":return "awaiting_settlement";
+    case "active":              return "active";
+    case "redeemable":         return "settled_won";  // won, ready to claim
+    case "lost":               return "settled_lost";
+    case "redeemed":           return "redeemed";
+    // Tolerate alternate/legacy spellings if the server ever emits them:
     case "settled_won":        return "settled_won";
     case "settled_lost":       return "settled_lost";
-    case "redeemed":           return "redeemed";
+    case "awaiting_settlement":
+    case "pending":            return "awaiting_settlement";
     default:                   return "active";
   }
 }
@@ -40,6 +50,10 @@ export function usePositions() {
       return items.map((item) => ({
         ...item,
         positionState: toPositionState(item.status),
+        direction:
+          item.is_up === true ? "up" as const :
+          item.is_up === false ? "down" as const :
+          undefined,
       }));
     },
   });
