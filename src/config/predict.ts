@@ -31,6 +31,12 @@ export const PRICE_SCALE = 1_000_000_000n; // 1e9
  */
 export const DUSDC_SCALE = 1_000_000n; // 1e6 = 10^DUSDC_DECIMALS
 
+/**
+ * Max age of volatility (SVI) data before a strategy is considered stale.
+ * FR-006c: block placing a bet on data older than this. 30 seconds.
+ */
+export const SVI_STALENESS_MS = 30_000;
+
 // ─── SVI Scale & Convention (verified via probe #7) ──────────────────────────
 
 /**

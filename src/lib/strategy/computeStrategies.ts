@@ -13,9 +13,9 @@ import {
   timeToExpiryYears,
 } from "./sviMath.js";
 import { snapToGrid, snapRangeToGrid, buildGrid } from "./snapToGrid.js";
+import { SVI_STALENESS_MS } from "@/config/predict.js";
 
 const QUANTITY = 1_000_000n; // 1 DUSDC in raw (scale 1e6)
-const SVI_STALENESS_MS = 30_000;
 
 /**
  * Compute 3 strategies from an OracleSnapshot.
