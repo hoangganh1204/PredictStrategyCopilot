@@ -10,12 +10,6 @@ import { computeStrategies } from "@/lib/strategy/computeStrategies.js";
 import { makeDevInspectPricingFn } from "@/lib/strategy/devInspectPricing.js";
 import type { OracleSnapshot, SVIParams } from "@/lib/strategy/types.js";
 
-const EXPIRY_LABELS: Record<string, number> = {
-  "15m": 15 * 60 * 1000,
-  "30m": 30 * 60 * 1000,
-  "1h": 60 * 60 * 1000,
-};
-
 const suiClient = new SuiJsonRpcClient({
   url: getJsonRpcFullnodeUrl("testnet"),
   network: "testnet",
@@ -28,50 +22,35 @@ function errorResponse(code: string, message: string, status: number) {
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const amountStr = searchParams.get("amount");
-  const expiryLabel = searchParams.get("expiry");
+  const oracleId = searchParams.get("oracleId");
 
-  if (!amountStr || !expiryLabel) {
+  if (!amountStr || !oracleId) {
     return errorResponse(
       "ERR_INVALID_AMOUNT",
-      "Thiếu tham số amount hoặc expiry",
+      "Missing amount or oracleId parameter",
       400
     );
   }
 
   const amount = parseFloat(amountStr);
   if (isNaN(amount) || amount <= 0) {
-    return errorResponse("ERR_INVALID_AMOUNT", "Số tiền không hợp lệ", 400);
+    return errorResponse("ERR_INVALID_AMOUNT", "Invalid amount", 400);
   }
 
-  const expiryWindow = EXPIRY_LABELS[expiryLabel];
-  if (!expiryWindow) {
-    return errorResponse(
-      "ERR_INVALID_AMOUNT",
-      "Kỳ hạn không hợp lệ — dùng 15m, 30m, hoặc 1h",
-      400
-    );
-  }
-
-  // Fetch oracle list and find active oracle closest to requested expiry window
+  // Find the requested market; it must still be open.
   const oracles = await fetchOracleList(PREDICT_CONFIG.PREDICT_OBJECT);
   const now = Date.now();
-  const activeOracles = oracles.filter(
-    (o) => o.status === "active" && o.expiry > now
+  const oracle = oracles.find(
+    (o) => o.oracle_id === oracleId && o.status === "active" && o.expiry > now
   );
 
-  if (activeOracles.length === 0) {
+  if (!oracle) {
     return errorResponse(
       "ERR_NO_MARKET",
-      "Hiện không có thị trường mở cho khung này",
+      "This market is no longer open",
       400
     );
   }
-
-  // Pick oracle whose remaining time is closest to requested expiry window
-  const target = now + expiryWindow;
-  const oracle = activeOracles.reduce((best, o) =>
-    Math.abs(o.expiry - target) < Math.abs(best.expiry - target) ? o : best
-  );
 
   // Parallel fetch oracle state and SVI
   const [state, svi] = await Promise.all([
@@ -81,7 +60,7 @@ export async function GET(req: NextRequest) {
 
   const latestPrice = state.latest_price;
   if (!latestPrice) {
-    return errorResponse("ERR_NO_MARKET", "Chưa có dữ liệu giá", 400);
+    return errorResponse("ERR_NO_MARKET", "No price data available yet", 400);
   }
 
   const sviParams: SVIParams = {

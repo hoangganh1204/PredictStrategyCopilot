@@ -3,6 +3,8 @@ import {
   computeTotalVariance,
   computeImpliedVol,
   computeSigmaMove,
+  computeBinaryProb,
+  computeRangeProb,
 } from "@/lib/strategy/sviMath";
 
 // Real SVI params from probe (2026-06-03), oracle 0x62a044..., scale ÷1e9:
@@ -89,5 +91,57 @@ describe("computeSigmaMove", () => {
     // So move should be in range 100e9..5000e9 ($100-$5000 in scale 1e9)
     expect(move).toBeGreaterThan(100_000_000_000n);  // > $100 in raw
     expect(move).toBeLessThan(5_000_000_000_000n);   // < $5000 in raw
+  });
+});
+
+describe("computeBinaryProb", () => {
+  const T = (REAL_EXPIRY_MS - PROBE_TS_MS) / (365.25 * 24 * 3600 * 1000);
+
+  it("is ~50% for an at-the-money 'up' bet (strike = forward)", () => {
+    const p = computeBinaryProb(REAL_FORWARD_RAW, REAL_FORWARD_RAW, REAL_SVI, T, true);
+    expect(p).toBeGreaterThan(0.45);
+    expect(p).toBeLessThan(0.55);
+  });
+
+  it("'up' below the strike is less likely than above (strike > forward)", () => {
+    const move = computeSigmaMove(REAL_FORWARD_RAW, REAL_SVI, T);
+    const p = computeBinaryProb(REAL_FORWARD_RAW, REAL_FORWARD_RAW + move, REAL_SVI, T, true);
+    expect(p).toBeLessThan(0.5);
+  });
+});
+
+describe("computeRangeProb", () => {
+  const T = (REAL_EXPIRY_MS - PROBE_TS_MS) / (365.25 * 24 * 3600 * 1000);
+
+  it("a ±1σ band around the forward is a likely outcome (~55-80%), not ~1%", () => {
+    const move = computeSigmaMove(REAL_FORWARD_RAW, REAL_SVI, T);
+    const p = computeRangeProb(
+      REAL_FORWARD_RAW,
+      REAL_FORWARD_RAW - move,
+      REAL_FORWARD_RAW + move,
+      REAL_SVI,
+      T
+    );
+    expect(p).toBeGreaterThan(0.5);
+    expect(p).toBeLessThan(0.85);
+  });
+
+  it("a wider band has higher probability than a narrow one", () => {
+    const move = computeSigmaMove(REAL_FORWARD_RAW, REAL_SVI, T);
+    const narrow = computeRangeProb(
+      REAL_FORWARD_RAW,
+      REAL_FORWARD_RAW - move / 2n,
+      REAL_FORWARD_RAW + move / 2n,
+      REAL_SVI,
+      T
+    );
+    const wide = computeRangeProb(
+      REAL_FORWARD_RAW,
+      REAL_FORWARD_RAW - move * 2n,
+      REAL_FORWARD_RAW + move * 2n,
+      REAL_SVI,
+      T
+    );
+    expect(wide).toBeGreaterThan(narrow);
   });
 });

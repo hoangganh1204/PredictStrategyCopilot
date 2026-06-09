@@ -2,8 +2,6 @@
 // TanStack Query hook for fetching strategies from GET /api/strategies.
 import { useQuery } from "@tanstack/react-query";
 
-export type ExpiryLabel = "15m" | "30m" | "1h";
-
 // Serialized from API (bigints come as strings)
 export interface ApiStrategy {
   type: "range" | "binary_up" | "binary_down";
@@ -32,16 +30,16 @@ export type StrategiesResult = StrategiesResponse | StrategiesError;
 
 export const STRATEGIES_KEY = ["strategies"] as const;
 
-export function useStrategies(amount: number | null, expiry: ExpiryLabel | null) {
+export function useStrategies(oracleId: string | null) {
   return useQuery<StrategiesResult>({
-    queryKey: [...STRATEGIES_KEY, amount, expiry],
-    enabled: !!amount && amount > 0 && !!expiry,
+    queryKey: [...STRATEGIES_KEY, oracleId],
+    enabled: !!oracleId,
     staleTime: 30_000,
     queryFn: async () => {
-      const params = new URLSearchParams({
-        amount: String(amount),
-        expiry: expiry!,
-      });
+      // The computed strategies are per-token and do NOT depend on the stake — the
+      // UI scales cost/payout by the live amount. Send a stub amount to satisfy the
+      // route's amount > 0 guard.
+      const params = new URLSearchParams({ amount: "1", oracleId: oracleId! });
       const res = await fetch(`/api/strategies?${params}`);
       return res.json() as Promise<StrategiesResult>;
     },

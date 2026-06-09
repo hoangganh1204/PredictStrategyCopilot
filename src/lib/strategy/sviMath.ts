@@ -72,7 +72,8 @@ export function computeBinaryProb(
 
 /**
  * Estimate range bet probability (price stays within [lower, upper]).
- * prob ≈ N(d2_upper) - N(d2_lower)
+ * P(lower < S < upper) = P(S > lower) − P(S > upper) = N(d2Lower) − N(d2Upper),
+ * where N(d2X) = P(S > X) matches computeBinaryProb's "up" convention.
  */
 export function computeRangeProb(
   forward_raw: bigint,
@@ -87,7 +88,7 @@ export function computeRangeProb(
   const sqrtT = Math.sqrt(Math.max(T, 1e-10));
   const d2Lower = -kLower / (sigmaATM * sqrtT);
   const d2Upper = -kUpper / (sigmaATM * sqrtT);
-  const prob = normalCDF(d2Upper) - normalCDF(d2Lower);
+  const prob = normalCDF(d2Lower) - normalCDF(d2Upper);
   return Math.max(0.01, Math.min(0.99, prob));
 }
 

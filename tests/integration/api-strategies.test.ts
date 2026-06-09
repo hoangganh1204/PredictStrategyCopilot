@@ -105,7 +105,7 @@ function makeRequest(params: Record<string, string>) {
 
 describe("GET /api/strategies", () => {
   it("returns 3 strategies for valid request", async () => {
-    const res = await GET(makeRequest({ amount: "10", expiry: "15m" }));
+    const res = await GET(makeRequest({ amount: "10", oracleId: ORACLE_ID }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
@@ -114,7 +114,7 @@ describe("GET /api/strategies", () => {
   });
 
   it("strategies have correct shape", async () => {
-    const res = await GET(makeRequest({ amount: "10", expiry: "15m" }));
+    const res = await GET(makeRequest({ amount: "10", oracleId: ORACLE_ID }));
     const body = await res.json();
     for (const s of body.strategies) {
       expect(["range", "binary_up", "binary_down"]).toContain(s.type);
@@ -127,26 +127,33 @@ describe("GET /api/strategies", () => {
   });
 
   it("returns 400 ERR_INVALID_AMOUNT when amount missing", async () => {
-    const res = await GET(makeRequest({ expiry: "15m" }));
+    const res = await GET(makeRequest({ oracleId: ORACLE_ID }));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.code).toBe("ERR_INVALID_AMOUNT");
   });
 
-  it("returns 400 ERR_INVALID_AMOUNT for unknown expiry", async () => {
-    const res = await GET(makeRequest({ amount: "10", expiry: "45m" }));
+  it("returns 400 ERR_INVALID_AMOUNT when oracleId missing", async () => {
+    const res = await GET(makeRequest({ amount: "10" }));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.code).toBe("ERR_INVALID_AMOUNT");
   });
 
-  it("returns 400 ERR_NO_MARKET when no active oracles", async () => {
+  it("returns 400 ERR_NO_MARKET when the oracle is not open", async () => {
     server.use(
       http.get(`${SERVER_URL}/predicts/:predictId/oracles`, () =>
         HttpResponse.json([{ ...ACTIVE_ORACLE, status: "settled" }])
       )
     );
-    const res = await GET(makeRequest({ amount: "10", expiry: "15m" }));
+    const res = await GET(makeRequest({ amount: "10", oracleId: ORACLE_ID }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.code).toBe("ERR_NO_MARKET");
+  });
+
+  it("returns 400 ERR_NO_MARKET when the oracleId is unknown", async () => {
+    const res = await GET(makeRequest({ amount: "10", oracleId: "0xdeadbeef" }));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.code).toBe("ERR_NO_MARKET");
@@ -158,7 +165,7 @@ describe("GET /api/strategies", () => {
         HttpResponse.json({ ...FRESH_SVI, checkpoint_timestamp_ms: NOW - 35_000 })
       )
     );
-    const res = await GET(makeRequest({ amount: "10", expiry: "15m" }));
+    const res = await GET(makeRequest({ amount: "10", oracleId: ORACLE_ID }));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.code).toBe("ERR_STALE_SVI");
