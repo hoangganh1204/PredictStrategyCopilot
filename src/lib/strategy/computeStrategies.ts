@@ -27,13 +27,13 @@ export async function computeStrategies(
 ): Promise<StrategiesResult> {
   // Guard: market must not be expired
   if (snapshot.expiryMs <= Date.now()) {
-    return { ok: false, code: "ERR_NO_MARKET", message: "Thị trường đã đóng cửa" };
+    return { ok: false, code: "ERR_NO_MARKET", message: "This market has closed" };
   }
 
   // Guard: SVI must be fresh (< 30s old) — if updatedAtMs present
   if (snapshot.svi.updatedAtMs !== undefined &&
       Date.now() - snapshot.svi.updatedAtMs > SVI_STALENESS_MS) {
-    return { ok: false, code: "ERR_STALE_SVI", message: "Dữ liệu biến động đã cũ (>30s)" };
+    return { ok: false, code: "ERR_STALE_SVI", message: "Volatility data is stale (>30s)" };
   }
 
   const T = timeToExpiryYears(snapshot.expiryMs);
@@ -122,7 +122,7 @@ export async function computeStrategies(
   }
 
   if (strategies.length === 0) {
-    return { ok: false, code: "ERR_NO_MARKET", message: "Không thể tính giá chiến lược" };
+    return { ok: false, code: "ERR_NO_MARKET", message: "Could not price any strategy" };
   }
 
   return { ok: true, strategies };

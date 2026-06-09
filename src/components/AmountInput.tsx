@@ -1,47 +1,42 @@
 "use client";
 // FR-006a: validate amount > 0 and ≤ game account balance before enabling fetch.
-import type { ExpiryLabel } from "@/hooks/useStrategies.js";
-
-const EXPIRY_OPTIONS: { label: string; value: ExpiryLabel }[] = [
-  { label: "15 phút", value: "15m" },
-  { label: "30 phút", value: "30m" },
-  { label: "1 giờ", value: "1h" },
-];
+import { formatDuration } from "@/lib/format.js";
+import { useNow } from "@/hooks/useCountdown.js";
+import type { Market } from "@/hooks/useMarkets.js";
 
 const QUICK_FRACTIONS = [
   { label: "25%", value: 0.25 },
   { label: "50%", value: 0.5 },
   { label: "75%", value: 0.75 },
-  { label: "Tối đa", value: 1 },
+  { label: "Max", value: 1 },
 ];
 
 interface AmountInputProps {
   amount: string;
-  expiry: ExpiryLabel;
   maxBalance: number;
+  markets: Market[];
+  marketsLoading: boolean;
+  selectedOracleId: string | null;
   onAmountChange: (v: string) => void;
-  onExpiryChange: (v: ExpiryLabel) => void;
-  onSubmit: () => void;
-  isLoading: boolean;
+  onSelectMarket: (oracleId: string) => void;
 }
 
 export function AmountInput({
   amount,
-  expiry,
   maxBalance,
+  markets,
+  marketsLoading,
+  selectedOracleId,
   onAmountChange,
-  onExpiryChange,
-  onSubmit,
-  isLoading,
+  onSelectMarket,
 }: AmountInputProps) {
+  const now = useNow(30_000);
   const amountNum = parseFloat(amount);
   const tooHigh = !isNaN(amountNum) && amountNum > maxBalance;
   const tooLow = !isNaN(amountNum) && amountNum <= 0;
-  const isValid = !isNaN(amountNum) && amountNum > 0 && amountNum <= maxBalance;
 
   function setFraction(frac: number) {
     const v = maxBalance * frac;
-    // Trim to 2 decimals without trailing zeros
     onAmountChange(String(Math.floor(v * 100) / 100));
   }
 
@@ -50,9 +45,9 @@ export function AmountInput({
       {/* Amount */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-zinc-300">Số tiền muốn chi</label>
+          <label className="text-sm font-medium text-zinc-300">Amount to spend</label>
           <span className="text-xs text-zinc-500">
-            Khả dụng: <span className="font-mono text-zinc-300">{maxBalance.toFixed(2)}</span> DUSDC
+            Available: <span className="font-mono text-zinc-300">{maxBalance.toFixed(2)}</span> DUSDC
           </span>
         </div>
 
@@ -87,40 +82,44 @@ export function AmountInput({
         </div>
 
         {tooHigh && (
-          <p className="text-xs text-red-400">Số tiền vượt quá số dư tài khoản chơi</p>
+          <p className="text-xs text-red-400">Amount exceeds your game account balance</p>
         )}
         {tooLow && amount !== "" && (
-          <p className="text-xs text-red-400">Số tiền phải lớn hơn 0</p>
+          <p className="text-xs text-red-400">Amount must be greater than 0</p>
         )}
       </div>
 
-      {/* Expiry */}
+      {/* Market (real expiries) */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-zinc-300">Kỳ hạn</label>
-        <div className="flex gap-2">
-          {EXPIRY_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => onExpiryChange(opt.value)}
-              className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors ${
-                expiry === opt.value
-                  ? "bg-zinc-700 text-zinc-100 ring-1 ring-zinc-600"
-                  : "bg-zinc-900/60 text-zinc-400 hover:bg-zinc-800"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <label className="text-sm font-medium text-zinc-300">Expiry (open markets)</label>
+        {marketsLoading ? (
+          <div className="h-10 animate-pulse rounded-xl bg-zinc-800" />
+        ) : markets.length === 0 ? (
+          <p className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 text-xs text-zinc-500">
+            No markets are open right now. Please try again later.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {markets.map((m) => {
+              const active = m.oracleId === selectedOracleId;
+              const label = now !== null ? formatDuration(m.expiryMs - now) : "…";
+              return (
+                <button
+                  key={m.oracleId}
+                  onClick={() => onSelectMarket(m.oracleId)}
+                  className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                    active
+                      ? "bg-zinc-700 text-zinc-100 ring-1 ring-zinc-600"
+                      : "bg-zinc-900/60 text-zinc-400 hover:bg-zinc-800"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
-
-      <button
-        onClick={onSubmit}
-        disabled={!isValid || isLoading}
-        className="btn-primary w-full rounded-xl py-3 text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-      >
-        {isLoading ? "Đang tải chiến lược..." : "Xem chiến lược"}
-      </button>
     </div>
   );
 }

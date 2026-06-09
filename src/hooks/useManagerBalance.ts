@@ -44,7 +44,7 @@ export function useManagerBalance() {
         };
       } catch (err) {
         console.error("[useManagerBalance]", err);
-        // Return null so UI shows "Tạo tài khoản" instead of infinite skeleton
+        // Return null so the UI shows "Create account" instead of an infinite skeleton
         return { managerId: null, balance_raw: 0n, balance_dusdc: 0 };
       }
     },

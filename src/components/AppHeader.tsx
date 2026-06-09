@@ -8,8 +8,8 @@ import { BalanceDisplay } from "./BalanceDisplay.js";
 import { ConnectButton } from "./ConnectButton.js";
 
 const TABS = [
-  { href: "/play", label: "Chơi" },
-  { href: "/positions", label: "Vị thế" },
+  { href: "/play", label: "Play" },
+  { href: "/positions", label: "Positions" },
 ] as const;
 
 export function AppHeader() {
@@ -49,7 +49,7 @@ export function AppHeader() {
         <div className="flex items-center gap-2.5">
           {account && (
             <span className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1.5">
-              <span className="text-xs text-zinc-500">Số dư</span>
+              <span className="text-xs text-zinc-500">Balance</span>
               <BalanceDisplay />
             </span>
           )}

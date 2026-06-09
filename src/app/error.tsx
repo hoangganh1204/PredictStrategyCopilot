@@ -23,16 +23,16 @@ export default function GlobalError({ error, reset }: ErrorProps) {
         </svg>
       </div>
       <div>
-        <h2 className="text-xl font-semibold text-zinc-100">Đã xảy ra lỗi</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">Something went wrong</h2>
         <p className="mt-2 text-zinc-400 text-sm max-w-sm">
-          Ứng dụng gặp sự cố không mong muốn. Vui lòng thử lại.
+          The app hit an unexpected error. Please try again.
         </p>
       </div>
       <button
         onClick={reset}
         className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-500 transition-colors"
       >
-        Thử lại
+        Try again
       </button>
     </div>
   );

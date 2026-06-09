@@ -60,22 +60,22 @@ export function StrategyList({ isLoading, data, stakeDusdc, onSelect, onBet, isB
     if (data.code === "ERR_NO_MARKET") {
       return (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center text-zinc-400">
-          Hiện không có thị trường mở cho khung thời gian này.
+          No market is open for this timeframe.
           <br />
-          <span className="text-sm text-zinc-500">Hãy thử chọn kỳ hạn khác.</span>
+          <span className="text-sm text-zinc-500">Try picking a different expiry.</span>
         </div>
       );
     }
     if (data.code === "ERR_STALE_SVI") {
       return (
         <div className="rounded-2xl border border-yellow-900/50 bg-yellow-500/10 p-4 text-sm text-yellow-400">
-          ⚠️ Dữ liệu biến động đã cũ. Vui lòng thử lại sau vài giây.
+          ⚠️ Volatility data is stale. Please try again in a few seconds.
         </div>
       );
     }
     return (
       <div className="rounded-2xl border border-red-900/50 bg-red-500/10 p-4 text-sm text-red-400">
-        Không thể tải chiến lược: {data.message}
+        Could not load strategies: {data.message}
       </div>
     );
   }

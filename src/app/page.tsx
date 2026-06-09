@@ -8,25 +8,25 @@ import { ConnectButton } from "@/components/ConnectButton.js";
 const STEPS = [
   {
     icon: "👛",
-    title: "Kết nối ví",
-    desc: "Liên kết ví Sui testnet của bạn — chỉ mất vài giây.",
+    title: "Connect wallet",
+    desc: "Link your Sui testnet wallet — it only takes a few seconds.",
   },
   {
     icon: "🎯",
-    title: "Chọn chiến lược",
-    desc: "Nhập số tiền, xem 3 gợi ý bằng ngôn ngữ dễ hiểu.",
+    title: "Pick a strategy",
+    desc: "Enter an amount and see 3 suggestions in plain language.",
   },
   {
     icon: "💰",
-    title: "Vào lệnh & nhận thưởng",
-    desc: "Ký một lần. Thắng thì nhận thưởng về tài khoản.",
+    title: "Bet & claim",
+    desc: "Sign once. If you win, claim your reward to your account.",
   },
 ];
 
 const FEATURES = [
-  "Giá BTC & biến động thị trường thật, cập nhật liên tục",
-  "Không thuật ngữ khó — đặt giá lên, đứng yên, hay phòng cú sập",
-  "Giao dịch thật trên Sui testnet, bạn tự ký bằng ví",
+  "Real BTC price & market volatility, updated continuously",
+  "No jargon — bet price up, stay flat, or hedge a crash",
+  "Real transactions on Sui testnet, signed by your own wallet",
 ];
 
 export default function HomePage() {
@@ -49,19 +49,19 @@ export default function HomePage() {
             Sui Testnet · DeepBook Predict
           </span>
           <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-            Dự đoán giá BTC,{" "}
-            <span className="text-gradient">đơn giản như đặt cược</span>
+            Predict BTC price,{" "}
+            <span className="text-gradient">as simple as a bet</span>
           </h1>
           <p className="max-w-md text-lg text-zinc-400">
-            Trợ lý chiến lược biến biến động thị trường phức tạp thành vài lựa
-            chọn dễ hiểu. Kết nối ví để bắt đầu.
+            A strategy copilot that turns complex market volatility into a few
+            easy choices. Connect your wallet to get started.
           </p>
           <div className="mt-2">
             <ConnectButton />
           </div>
         </section>
 
-        {/* How it works */}
+        {/* How it works — section heading kept implicit via the cards below */}
         <section className="grid w-full gap-4 sm:grid-cols-3">
           {STEPS.map((step, i) => (
             <div

@@ -20,8 +20,8 @@ export function TxStatusOverlay({ isPending, result, onDismiss }: TxStatusOverla
         {isPending && (
           <>
             <div className="h-12 w-12 rounded-full border-4 border-zinc-700 border-t-blue-500 animate-spin" />
-            <p className="text-zinc-200 font-medium">Đang xử lý...</p>
-            <p className="text-zinc-500 text-sm">Vui lòng xác nhận trong ví của bạn</p>
+            <p className="text-zinc-200 font-medium">Processing...</p>
+            <p className="text-zinc-500 text-sm">Please confirm in your wallet</p>
           </>
         )}
 
@@ -32,7 +32,7 @@ export function TxStatusOverlay({ isPending, result, onDismiss }: TxStatusOverla
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-zinc-200 font-medium">Giao dịch thành công!</p>
+            <p className="text-zinc-200 font-medium">Transaction successful!</p>
             {result.digest && (
               <a
                 href={`https://suiscan.xyz/testnet/tx/${result.digest}`}
@@ -40,14 +40,14 @@ export function TxStatusOverlay({ isPending, result, onDismiss }: TxStatusOverla
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
               >
-                Xem trên explorer
+                View on explorer
                 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
             )}
             <button onClick={onDismiss} className="btn-primary mt-2 rounded-full px-6 py-2 text-sm font-medium text-white transition-all">
-              Đóng
+              Close
             </button>
           </>
         )}
@@ -59,9 +59,9 @@ export function TxStatusOverlay({ isPending, result, onDismiss }: TxStatusOverla
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <p className="text-zinc-200 font-medium">Bạn đã hủy giao dịch</p>
+            <p className="text-zinc-200 font-medium">You cancelled the transaction</p>
             <button onClick={onDismiss} className="mt-2 rounded-full bg-zinc-800 px-5 py-2 text-sm text-zinc-300 hover:bg-zinc-700 transition-colors">
-              Quay lại
+              Back
             </button>
           </>
         )}
@@ -73,10 +73,10 @@ export function TxStatusOverlay({ isPending, result, onDismiss }: TxStatusOverla
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01" />
               </svg>
             </div>
-            <p className="text-zinc-200 font-medium">Giao dịch thất bại</p>
-            <p className="text-zinc-500 text-sm">{result.error ?? "Vui lòng thử lại"}</p>
+            <p className="text-zinc-200 font-medium">Transaction failed</p>
+            <p className="text-zinc-500 text-sm">{result.error ?? "Please try again"}</p>
             <button onClick={onDismiss} className="mt-2 rounded-full bg-zinc-800 px-5 py-2 text-sm text-zinc-300 hover:bg-zinc-700 transition-colors">
-              Thử lại
+              Try again
             </button>
           </>
         )}

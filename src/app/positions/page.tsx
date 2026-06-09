@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { usePositions, POSITIONS_KEY } from "@/hooks/usePositions.js";
+import { useRangePositions, RANGE_POSITIONS_KEY } from "@/hooks/useRangePositions.js";
 import { useManagerBalance, MANAGER_BALANCE_KEY } from "@/hooks/useManagerBalance.js";
 import { useExecuteTx } from "@/hooks/useExecuteTx.js";
 import { buildRedeemTx } from "@/lib/execute/buildRedeemTx.js";
@@ -15,7 +16,9 @@ import type { TxResult } from "@/lib/execute/types.js";
 export default function PositionsPage() {
   const account = useCurrentAccount();
   const { data: balance } = useManagerBalance();
-  const { data: positions, isLoading } = usePositions();
+  const { data: binaryPositions, isLoading } = usePositions();
+  // Range positions aren't indexed by the Public Server — read them from chain.
+  const { data: rangePositions } = useRangePositions();
   const { execute, isPending } = useExecuteTx();
   const [overlayResult, setOverlayResult] = useState<TxResult | null>(null);
 
@@ -24,7 +27,7 @@ export default function PositionsPage() {
       <>
         <AppHeader />
         <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
-          <p className="text-zinc-400">Kết nối ví để xem vị thế</p>
+          <p className="text-zinc-400">Connect your wallet to view positions</p>
           <ConnectButton />
         </main>
       </>
@@ -52,14 +55,25 @@ export default function PositionsPage() {
     const result = await execute(tx, [
       [...MANAGER_BALANCE_KEY, account?.address],
       [...POSITIONS_KEY, account?.address],
+      [...RANGE_POSITIONS_KEY, account?.address, balance?.managerId],
     ]);
     setOverlayResult(result);
   }
 
-  const activeCount = positions?.filter(
+  // Merge binary (server) + range (on-chain) positions; surface claimable first.
+  const STATE_ORDER: Record<string, number> = {
+    settled_won: 0, active: 1, awaiting_settlement: 1, settled_lost: 2, redeemed: 3,
+  };
+  const positions = [...(binaryPositions ?? []), ...(rangePositions ?? [])].sort(
+    (a, b) =>
+      (STATE_ORDER[a.positionState] ?? 9) - (STATE_ORDER[b.positionState] ?? 9) ||
+      a.expiry - b.expiry
+  );
+
+  const activeCount = positions.filter(
     (p) => p.positionState === "active" || p.positionState === "awaiting_settlement"
-  ).length ?? 0;
-  const claimableCount = positions?.filter((p) => p.positionState === "settled_won").length ?? 0;
+  ).length;
+  const claimableCount = positions.filter((p) => p.positionState === "settled_won").length;
 
   return (
     <>
@@ -67,11 +81,11 @@ export default function PositionsPage() {
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
         {/* Title */}
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-zinc-100">Vị thế của tôi</h1>
+          <h1 className="text-xl font-bold tracking-tight text-zinc-100">My positions</h1>
           <p className="text-sm text-zinc-500">
-            {activeCount} đang chạy
+            {activeCount} active
             {claimableCount > 0 && (
-              <span className="text-emerald-400"> · {claimableCount} chờ nhận thưởng</span>
+              <span className="text-emerald-400"> · {claimableCount} ready to claim</span>
             )}
           </p>
         </div>

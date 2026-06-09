@@ -11,8 +11,10 @@ import { StrategyList } from "@/components/StrategyList.js";
 import { ConnectButton } from "@/components/ConnectButton.js";
 import { TxStatusOverlay } from "@/components/TxStatusOverlay.js";
 import { useManagerBalance, MANAGER_BALANCE_KEY } from "@/hooks/useManagerBalance.js";
+import { RANGE_POSITIONS_KEY } from "@/hooks/useRangePositions.js";
+import { useMarkets } from "@/hooks/useMarkets.js";
 import { useExecuteTx } from "@/hooks/useExecuteTx.js";
-import { useStrategies, type ExpiryLabel, type ApiStrategy } from "@/hooks/useStrategies.js";
+import { useStrategies, type ApiStrategy } from "@/hooks/useStrategies.js";
 import { buildBinaryMintTx, buildRangeMintTx } from "@/lib/execute/buildMintTx.js";
 import { computeBetEconomics } from "@/lib/strategy/sizing.js";
 import { SVI_STALENESS_MS } from "@/config/predict.js";
@@ -52,50 +54,48 @@ export default function PlayPage() {
   const { data: balance } = useManagerBalance();
   const { execute, isPending } = useExecuteTx();
 
-  const [amount, setAmount] = useState("");
-  const [expiry, setExpiry] = useState<ExpiryLabel>("15m");
-  const [submittedAmount, setSubmittedAmount] = useState<number | null>(null);
-  const [submittedExpiry, setSubmittedExpiry] = useState<ExpiryLabel | null>(null);
-  const [overlayResult, setOverlayResult] = useState<TxResult | null>(null);
+  const { data: markets, isLoading: marketsLoading } = useMarkets();
 
-  const { data: strategies, isLoading, dataUpdatedAt, refetch } = useStrategies(
-    submittedAmount,
-    submittedExpiry
-  );
+  const [amount, setAmount] = useState("");
+  const [selectedOracleId, setSelectedOracleId] = useState<string | null>(null);
+  const [overlayResult, setOverlayResult] = useState<TxResult | null>(null);
+  const [showDeposit, setShowDeposit] = useState(false);
 
   const maxBalance = balance?.balance_dusdc ?? 0;
   const managerId = balance?.managerId;
   const hasBalance = maxBalance > 0;
+  // Default to the soonest market until the user picks another.
+  const activeOracleId = selectedOracleId ?? markets?.[0]?.oracleId ?? null;
+
+  // Strategies depend only on the market — they load as soon as one is selected.
+  const { data: strategies, isLoading, dataUpdatedAt, refetch } = useStrategies(activeOracleId);
+
+  // Live stake (DUSDC the user spends) — rescales the cards instantly, no refetch.
+  const stake = parseFloat(amount);
+  const validStake = !isNaN(stake) && stake > 0 && stake <= maxBalance ? stake : 0;
 
   if (!account) {
     return (
       <>
         <AppHeader />
         <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
-          <p className="text-zinc-400">Kết nối ví để bắt đầu chơi</p>
+          <p className="text-zinc-400">Connect your wallet to start playing</p>
           <ConnectButton />
         </main>
       </>
     );
   }
 
-  function handleSubmit() {
-    const num = parseFloat(amount);
-    if (isNaN(num) || num <= 0) return;
-    setSubmittedAmount(num);
-    setSubmittedExpiry(expiry);
-  }
-
   // T045 + T047: build and execute the mint PTB
   async function handleBet(strategy: ApiStrategy) {
-    if (!managerId || !strategies?.ok) return;
+    if (!managerId || !strategies?.ok || validStake <= 0) return;
 
     // FR-006c: block betting on volatility data older than 30s; refresh first.
     if (Date.now() - dataUpdatedAt > SVI_STALENESS_MS) {
       await refetch();
       setOverlayResult({
         status: "failed",
-        error: "Dữ liệu biến động đã cũ. Đã làm mới — vui lòng vào lệnh lại.",
+        error: "Volatility data was stale. Refreshed — please place the bet again.",
       });
       return;
     }
@@ -104,7 +104,7 @@ export default function PlayPage() {
     // User stake = amount they spend; derive token quantity from the per-token cost
     // so the actual mint cost ≈ stake. Each token redeems 1 DUSDC on win.
     const { quantityRaw: quantity_raw } = computeBetEconomics(
-      submittedAmount ?? 0,
+      validStake,
       Number(strategy.cost_raw)
     );
     if (quantity_raw <= 0n) return;
@@ -132,10 +132,11 @@ export default function PlayPage() {
       });
     }
 
-    // Execute — invalidate balance + positions on success
+    // Execute — invalidate balance + positions (binary + range) on success
     const result = await execute(tx, [
       [...MANAGER_BALANCE_KEY, account?.address],
       [...POSITIONS_KEY, account?.address],
+      [...RANGE_POSITIONS_KEY, account?.address, managerId],
     ]);
     setOverlayResult(result);
   }
@@ -153,9 +154,9 @@ export default function PlayPage() {
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
         {/* Title */}
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-zinc-100">Dự đoán giá BTC</h1>
+          <h1 className="text-xl font-bold tracking-tight text-zinc-100">Predict BTC price</h1>
           <p className="text-sm text-zinc-500">
-            Chọn số tiền, xem gợi ý, và vào lệnh chỉ với một cú ký.
+            Pick an amount, review the suggestions, and bet with a single signature.
           </p>
         </div>
 
@@ -164,9 +165,9 @@ export default function PlayPage() {
 
         {/* Step 1: deposit (only when game balance is zero) */}
         {!hasBalance && (
-          <StepCard step={1} title="Nạp DUSDC vào tài khoản chơi">
+          <StepCard step={1} title="Deposit DUSDC into game account">
             <p className="mb-4 text-sm text-zinc-400">
-              Tiền chơi nằm trong tài khoản trên chuỗi. Nạp một lần để bắt đầu đặt lệnh.
+              Your funds live in an on-chain account. Deposit once to start betting.
             </p>
             <DepositForm />
           </StepCard>
@@ -176,34 +177,61 @@ export default function PlayPage() {
         {hasBalance && (
           <StepCard
             step={1}
-            title="Chọn số tiền & kỳ hạn"
-            hint={`Còn ${maxBalance.toFixed(2)} DUSDC`}
+            title="Choose amount & expiry"
+            hint={`${maxBalance.toFixed(2)} DUSDC left`}
           >
             <AmountInput
               amount={amount}
-              expiry={expiry}
               maxBalance={maxBalance}
+              markets={markets ?? []}
+              marketsLoading={marketsLoading}
+              selectedOracleId={activeOracleId}
               onAmountChange={setAmount}
-              onExpiryChange={setExpiry}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
+              onSelectMarket={setSelectedOracleId}
             />
           </StepCard>
         )}
 
-        {/* Step: strategy list with bet buttons */}
-        {(submittedAmount || isLoading) && (
+        {/* Top-up: always available so the user can deposit more anytime */}
+        {hasBalance &&
+          (showDeposit ? (
+            <section className="card-surface animate-rise rounded-2xl border border-zinc-800 p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-zinc-200">Add DUSDC</h2>
+                <button
+                  onClick={() => setShowDeposit(false)}
+                  className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+                >
+                  Close
+                </button>
+              </div>
+              <DepositForm />
+            </section>
+          ) : (
+            <button
+              onClick={() => setShowDeposit(true)}
+              className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
+            >
+              ＋ Add DUSDC
+            </button>
+          ))}
+
+        {/* Step 2: strategies — auto-loaded for the selected market, scaled live by amount */}
+        {hasBalance && activeOracleId && (
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2.5 px-1">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/15 text-xs font-semibold text-blue-400">
                 2
               </span>
-              <h2 className="text-sm font-semibold text-zinc-200">Chọn chiến lược & vào lệnh</h2>
+              <h2 className="text-sm font-semibold text-zinc-200">Pick a strategy & bet</h2>
+              {validStake <= 0 && (
+                <span className="ml-auto text-xs text-zinc-500">Enter an amount above</span>
+              )}
             </div>
             <StrategyList
               isLoading={isLoading}
               data={strategies}
-              stakeDusdc={submittedAmount ?? 0}
+              stakeDusdc={validStake}
               onBet={handleBet}
               isBetting={isPending}
             />

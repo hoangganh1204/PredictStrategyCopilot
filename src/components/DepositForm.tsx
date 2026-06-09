@@ -54,7 +54,7 @@ export function DepositForm() {
     return (
       <div className="flex flex-col items-center gap-3 py-4">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-600 border-t-blue-500" />
-        <p className="text-sm text-zinc-400">Đang tải tài khoản chơi...</p>
+        <p className="text-sm text-zinc-400">Loading game account...</p>
       </div>
     );
   }
@@ -65,14 +65,14 @@ export function DepositForm() {
       <>
         <div className="flex flex-col gap-3">
           <p className="text-sm text-zinc-400">
-            Tạo tài khoản chơi trên chuỗi (1 lần duy nhất) để giữ tiền cược của bạn.
+            Create your on-chain game account (one time only) to hold your betting funds.
           </p>
           <button
             onClick={handleCreateManager}
             disabled={isPending}
             className="btn-primary w-full rounded-xl py-2.5 text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
           >
-            {isPending ? "Đang tạo..." : "Tạo tài khoản chơi"}
+            {isPending ? "Creating..." : "Create game account"}
           </button>
         </div>
         <TxStatusOverlay isPending={isPending} result={overlayResult} onDismiss={() => setOverlayResult(null)} />
@@ -85,8 +85,8 @@ export function DepositForm() {
     <>
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <label className="text-sm text-zinc-400">Nạp DUSDC vào tài khoản chơi</label>
-          <span className="text-xs text-zinc-500">Ví: {walletBalance_dusdc.toFixed(2)} DUSDC</span>
+          <label className="text-sm text-zinc-400">Deposit DUSDC into game account</label>
+          <span className="text-xs text-zinc-500">Wallet: {walletBalance_dusdc.toFixed(2)} DUSDC</span>
         </div>
         <div className="flex gap-2">
           <input
@@ -103,14 +103,14 @@ export function DepositForm() {
             disabled={!isValidAmount || coinIds.length === 0 || isPending}
             className="btn-primary rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
           >
-            {isPending ? "Đang nạp..." : "Nạp tiền"}
+            {isPending ? "Depositing..." : "Deposit"}
           </button>
         </div>
         {!isNaN(amountNum) && amountNum > walletBalance_dusdc && amountNum > 0 && (
-          <p className="text-xs text-red-400">Số tiền vượt quá số dư trong ví</p>
+          <p className="text-xs text-red-400">Amount exceeds your wallet balance</p>
         )}
         {walletBalance_raw === 0n && (
-          <p className="text-xs text-zinc-500">Ví không có DUSDC. Hãy lấy từ faucet testnet.</p>
+          <p className="text-xs text-zinc-500">No DUSDC in wallet. Get some from the testnet faucet.</p>
         )}
       </div>
       <TxStatusOverlay isPending={isPending} result={overlayResult} onDismiss={() => setOverlayResult(null)} />

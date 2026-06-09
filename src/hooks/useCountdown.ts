@@ -18,3 +18,20 @@ export function useCountdown(expiryMs: number): number | null {
 
   return remaining;
 }
+
+/**
+ * Current timestamp, refreshed on an interval. null until mounted so Date.now()
+ * is never called during render. Use to derive live labels for a list of items.
+ */
+export function useNow(intervalMs = 1000): number | null {
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    tick();
+    const id = setInterval(tick, intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+
+  return now;
+}

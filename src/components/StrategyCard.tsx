@@ -1,5 +1,5 @@
 "use client";
-// FR-009: plain Vietnamese labels — no option jargon.
+// FR-009: plain-language labels — no options jargon.
 import type { ApiStrategy } from "@/hooks/useStrategies.js";
 import { formatPrice, formatDusdcNumber, formatCountdown } from "@/lib/format.js";
 import { computeBetEconomics } from "@/lib/strategy/sizing.js";
@@ -19,24 +19,24 @@ interface TypeStyle {
 
 const TYPE_STYLES: Record<StrategyType, TypeStyle> = {
   binary_up: {
-    label: "Đặt giá lên",
-    description: "Thắng nếu giá BTC tăng vượt mức dự đoán khi đáo hạn.",
+    label: "Price up",
+    description: "Win if BTC rises above the predicted level at expiry.",
     icon: "↗",
     chip: "bg-emerald-500/15 text-emerald-400",
     bar: "bg-emerald-500",
     ring: "hover:border-emerald-500/40",
   },
   binary_down: {
-    label: "Phòng cú sập",
-    description: "Thắng nếu giá BTC giảm dưới mức dự đoán — chiến lược phòng thủ.",
+    label: "Crash hedge",
+    description: "Win if BTC falls below the predicted level — a defensive play.",
     icon: "🛡",
     chip: "bg-amber-500/15 text-amber-400",
     bar: "bg-amber-500",
     ring: "hover:border-amber-500/40",
   },
   range: {
-    label: "Đặt giá đứng yên",
-    description: "Thắng nếu giá BTC dao động trong biên độ hẹp đến khi đáo hạn.",
+    label: "Stay in range",
+    description: "Win if BTC stays within a narrow band until expiry.",
     icon: "↔",
     chip: "bg-violet-500/15 text-violet-400",
     bar: "bg-violet-500",
@@ -46,9 +46,9 @@ const TYPE_STYLES: Record<StrategyType, TypeStyle> = {
 
 /** Map win probability → a plain-language risk label. */
 function riskLabel(prob: number): { text: string; color: string } {
-  if (prob >= 0.55) return { text: "Khả năng cao", color: "text-emerald-400" };
-  if (prob >= 0.3) return { text: "Cân bằng", color: "text-zinc-300" };
-  return { text: "Rủi ro cao · thưởng lớn", color: "text-amber-400" };
+  if (prob >= 0.55) return { text: "High chance", color: "text-emerald-400" };
+  if (prob >= 0.3) return { text: "Balanced", color: "text-zinc-300" };
+  return { text: "High risk · big reward", color: "text-amber-400" };
 }
 
 interface StrategyCardProps {
@@ -57,7 +57,7 @@ interface StrategyCardProps {
   /** DUSDC the user wants to spend (stake). Scales cost/win/profit on the card. */
   stakeDusdc: number;
   onSelect?: (strategy: ApiStrategy) => void;
-  /** Called when user clicks "Vào lệnh" to place the bet */
+  /** Called when the user clicks "Place bet" to submit the bet */
   onBet?: (strategy: ApiStrategy) => void;
   isSelected?: boolean;
   isBetting?: boolean;
@@ -75,10 +75,13 @@ export function StrategyCard({
   const style = TYPE_STYLES[strategy.type];
   // cost_raw is the cost to mint 1 token; each token redeems 1 DUSDC on win
   // (verified on testnet). Scale to the user's stake: spend = stake, win = stake / prob.
+  const hasStake = stakeDusdc > 0;
   const econ = computeBetEconomics(stakeDusdc, Number(strategy.cost_raw));
-  const cost = formatDusdcNumber(econ.stakeRaw);
-  const winPayout = formatDusdcNumber(econ.winRaw);
-  const profit = `${econ.profitRaw >= 0 ? "+" : ""}${formatDusdcNumber(econ.profitRaw)}`;
+  const cost = hasStake ? formatDusdcNumber(econ.stakeRaw) : "—";
+  const winPayout = hasStake ? formatDusdcNumber(econ.winRaw) : "—";
+  const profit = hasStake
+    ? `${econ.profitRaw >= 0 ? "+" : ""}${formatDusdcNumber(econ.profitRaw)}`
+    : "—";
   const probPct = Math.round(strategy.prob * 100);
   const multiple = econ.stakeRaw > 0 ? econ.winRaw / econ.stakeRaw : 0;
   const risk = riskLabel(strategy.prob);
@@ -120,7 +123,7 @@ export function StrategyCard({
       {/* Probability bar */}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-zinc-500">Khả năng thắng</span>
+          <span className="text-zinc-500">Win chance</span>
           <span className="font-mono text-zinc-300">{probPct}%</span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
@@ -131,17 +134,18 @@ export function StrategyCard({
       {/* Economics */}
       <div className="grid grid-cols-3 gap-2 rounded-xl bg-zinc-900/60 p-3">
         <div>
-          <div className="text-xs text-zinc-500">Bạn chi</div>
+          <div className="text-xs text-zinc-500">You pay</div>
           <div className="mt-0.5 font-mono text-sm text-zinc-100">{cost}</div>
         </div>
         <div>
-          <div className="text-xs text-zinc-500">Nhận nếu thắng</div>
+          <div className="text-xs text-zinc-500">Win payout</div>
           <div className="mt-0.5 font-mono text-sm text-emerald-400">{winPayout}</div>
         </div>
         <div>
-          <div className="text-xs text-zinc-500">Lãi · hệ số</div>
+          <div className="text-xs text-zinc-500">Profit · mult.</div>
           <div className="mt-0.5 font-mono text-sm text-emerald-400">
-            {profit} <span className="text-zinc-500">·{multiple.toFixed(1)}x</span>
+            {profit}
+            {hasStake && <span className="text-zinc-500"> ·{multiple.toFixed(1)}x</span>}
           </div>
         </div>
       </div>
@@ -150,7 +154,7 @@ export function StrategyCard({
       <div className="flex items-center justify-between text-xs">
         {priceInfo ? (
           <span className="text-zinc-500">
-            Mức giá: <span className="text-zinc-300">{priceInfo}</span>
+            Price: <span className="text-zinc-300">{priceInfo}</span>
           </span>
         ) : <span />}
         <span className="flex items-center gap-1.5 text-zinc-500">
@@ -158,7 +162,7 @@ export function StrategyCard({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span className="font-mono text-sm text-zinc-300">
-            {remaining === null ? "—" : remaining === 0 ? "Đã đóng" : formatCountdown(remaining)}
+            {remaining === null ? "—" : remaining === 0 ? "Closed" : formatCountdown(remaining)}
           </span>
         </span>
       </div>
@@ -170,10 +174,16 @@ export function StrategyCard({
             e.stopPropagation();
             onBet(strategy);
           }}
-          disabled={isBetting || isExpired}
+          disabled={isBetting || isExpired || !hasStake}
           className="btn-primary w-full rounded-xl py-2.5 text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
         >
-          {isBetting ? "Đang xử lý..." : isExpired ? "Thị trường đã đóng" : "Vào lệnh"}
+          {isBetting
+            ? "Processing..."
+            : isExpired
+            ? "Market closed"
+            : !hasStake
+            ? "Enter an amount"
+            : "Place bet"}
         </button>
       )}
     </div>

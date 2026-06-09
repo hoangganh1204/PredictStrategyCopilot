@@ -38,6 +38,20 @@ export function formatCountdown(ms: number): string {
 }
 
 /**
+ * Human-readable duration for a future gap (ms): "45m" · "4h 11m" · "3d 4h".
+ */
+export function formatDuration(ms: number): string {
+  if (ms <= 0) return "closed";
+  const totalMin = Math.floor(ms / 60000);
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const mins = totalMin % 60;
+  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return `${mins}m`;
+}
+
+/**
  * Format a raw price (scale 1e9) to USD display.
  * Example: 67_000_000_000_000n → "$67,000"
  */

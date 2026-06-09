@@ -63,13 +63,13 @@ export function useExecuteTx(): UseExecuteTxReturn {
         return result;
       } catch (err) {
         const result: TxResult = isUserRejection(err)
-          ? { status: "rejected", error: "Bạn đã hủy giao dịch" }
+          ? { status: "rejected", error: "You cancelled the transaction" }
           : {
               status: "failed",
               error:
                 err instanceof Error
                   ? err.message
-                  : "Giao dịch thất bại. Vui lòng thử lại.",
+                  : "Transaction failed. Please try again.",
             };
         setLastResult(result);
         return result;
