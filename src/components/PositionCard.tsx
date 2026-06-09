@@ -6,11 +6,11 @@ import { formatDusdcNumber, formatPrice, formatCountdown } from "@/lib/format.js
 import { useCountdown } from "@/hooks/useCountdown.js";
 
 const STATUS_LABELS: Record<PositionState, string> = {
-  active:              "Đang hoạt động",
-  awaiting_settlement: "Chờ chốt",
-  settled_won:         "Thắng",
-  settled_lost:        "Thua",
-  redeemed:            "Đã nhận",
+  active:              "Active",
+  awaiting_settlement: "Awaiting settlement",
+  settled_won:         "Won",
+  settled_lost:        "Lost",
+  redeemed:            "Claimed",
 };
 
 const STATUS_COLORS: Record<PositionState, string> = {
@@ -24,12 +24,12 @@ const STATUS_COLORS: Record<PositionState, string> = {
 
 function getBetTypeStyle(pos: Position): { label: string; icon: string; chip: string } {
   if (pos.direction === "up")
-    return { label: "Đặt giá lên", icon: "↗", chip: "bg-emerald-500/15 text-emerald-400" };
+    return { label: "Price up", icon: "↗", chip: "bg-emerald-500/15 text-emerald-400" };
   if (pos.direction === "down")
-    return { label: "Phòng cú sập", icon: "🛡", chip: "bg-amber-500/15 text-amber-400" };
+    return { label: "Crash hedge", icon: "🛡", chip: "bg-amber-500/15 text-amber-400" };
   if (pos.lower_strike !== undefined && pos.higher_strike !== undefined)
-    return { label: "Đặt giá đứng yên", icon: "↔", chip: "bg-violet-500/15 text-violet-400" };
-  return { label: "Vị thế", icon: "•", chip: "bg-zinc-700 text-zinc-300" };
+    return { label: "Stay in range", icon: "↔", chip: "bg-violet-500/15 text-violet-400" };
+  return { label: "Position", icon: "•", chip: "bg-zinc-700 text-zinc-300" };
 }
 
 function getPriceInfo(pos: Position): string {
@@ -42,7 +42,7 @@ function getPriceInfo(pos: Position): string {
 function Countdown({ expiryMs }: { expiryMs: number }) {
   const remaining = useCountdown(expiryMs);
   if (remaining === null) return <span className="text-xs text-zinc-500">—</span>;
-  if (remaining === 0) return <span className="text-xs text-zinc-500">Đã đáo hạn</span>;
+  if (remaining === 0) return <span className="text-xs text-zinc-500">Expired</span>;
   return <span className="font-mono text-xs text-zinc-400">{formatCountdown(remaining)}</span>;
 }
 
@@ -74,20 +74,20 @@ export function PositionCard({ position, onRedeem, isRedeeming }: PositionCardPr
               {statusLabel}
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-zinc-500">Mức giá: {priceInfo}</p>
+          <p className="mt-0.5 text-xs text-zinc-500">Price: {priceInfo}</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between border-t border-zinc-800 pt-3">
         <div className="flex gap-4">
           <div>
-            <div className="text-xs text-zinc-500">Số lượng</div>
+            <div className="text-xs text-zinc-500">Quantity</div>
             <div className="font-mono text-sm text-zinc-200">
               {formatDusdcNumber(position.open_quantity)}
             </div>
           </div>
           <div>
-            <div className="text-xs text-zinc-500">Chi phí</div>
+            <div className="text-xs text-zinc-500">Cost</div>
             <div className="font-mono text-sm text-zinc-200">
               {formatDusdcNumber(position.total_cost)}
             </div>
@@ -120,7 +120,7 @@ export function PositionCard({ position, onRedeem, isRedeeming }: PositionCardPr
 
         {(positionState === "active" || positionState === "awaiting_settlement") && (
           <div className="text-right">
-            <div className="text-xs text-zinc-500 mb-0.5">Còn lại</div>
+            <div className="text-xs text-zinc-500 mb-0.5">Time left</div>
             <Countdown expiryMs={expiryMs} />
           </div>
         )}
@@ -133,13 +133,13 @@ export function PositionCard({ position, onRedeem, isRedeeming }: PositionCardPr
           disabled={isRedeeming}
           className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:from-emerald-500 hover:to-green-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
         >
-          {isRedeeming ? "Đang xử lý..." : "🎉 Nhận thưởng"}
+          {isRedeeming ? "Processing..." : "🎉 Claim winnings"}
         </button>
       )}
 
       {positionState === "settled_lost" && (
         <p className="text-center text-xs text-zinc-500">
-          Lần này không trúng — thử chiến lược khác?
+          Not a win this time — try another strategy?
         </p>
       )}
     </div>

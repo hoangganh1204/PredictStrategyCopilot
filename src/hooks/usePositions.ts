@@ -44,6 +44,9 @@ export function usePositions() {
     queryKey: [...POSITIONS_KEY, account?.address],
     enabled: !!account && !!managerId,
     staleTime: 5_000,
+    // Poll so positions flip to Won/Lost (and the redeem button appears) shortly
+    // after settlement (~11s past expiry) without a manual page reload.
+    refetchInterval: 15_000,
     queryFn: async () => {
       if (!managerId) return [];
       const items = await fetchPositionsSummary(managerId);
