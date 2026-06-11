@@ -42,3 +42,6 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+# Auto-Vault keeper state (local runtime data)
+.vault.json
