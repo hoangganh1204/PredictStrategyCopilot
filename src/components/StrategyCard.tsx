@@ -61,11 +61,13 @@ function StatRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-zinc-500">{label}</span>
+      <span className="text-zinc-500">
+        {label}
+        {extra && <span className="text-zinc-600"> {extra}</span>}
+      </span>
       <span className={`whitespace-nowrap font-mono ${valueClass}`}>
         {value}
         {unit && <span className="text-zinc-500"> DUSDC</span>}
-        {extra && <span className="text-zinc-500"> {extra}</span>}
       </span>
     </div>
   );
