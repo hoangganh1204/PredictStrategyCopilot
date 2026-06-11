@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader.js";
+import { AssetSelect } from "@/components/AssetSelect.js";
 import { PriceChart } from "@/components/PriceChart.js";
 import { DepositForm } from "@/components/DepositForm.js";
 import { AmountInput } from "@/components/AmountInput.js";
@@ -177,29 +178,18 @@ export default function PlayPage() {
           </p>
         </div>
 
-        {/* Asset selector — supported assets; ones without open markets are chart-only */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Asset selector — dropdown; assets without open markets are chart-only */}
+        <div className="flex items-center gap-2">
           <span className="text-sm text-zinc-500">Asset</span>
-          {allAssets.map((a) => {
-            const live = assetsWithMarkets.includes(a);
-            return (
-              <button
-                key={a}
-                onClick={() => {
-                  setSelectedAsset(a);
-                  setSelectedOracleId(null);
-                }}
-                className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                  a === activeAsset
-                    ? "bg-zinc-700 text-zinc-100 ring-1 ring-zinc-600"
-                    : "bg-zinc-900/60 text-zinc-400 hover:bg-zinc-800"
-                }`}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-emerald-400" : "bg-zinc-600"}`} />
-                {a}
-              </button>
-            );
-          })}
+          <AssetSelect
+            assets={allAssets}
+            value={activeAsset}
+            liveAssets={assetsWithMarkets}
+            onChange={(a) => {
+              setSelectedAsset(a);
+              setSelectedOracleId(null);
+            }}
+          />
         </div>
 
         {/* Price chart for the selected asset (works for any asset) */}
