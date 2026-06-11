@@ -9,8 +9,7 @@
     "lint": "eslint",
     "probe": "tsx scripts/probe.ts",
     "e2e": "tsx scripts/e2e-execute.ts",
-    "e2e:redeem": "tsx scripts/e2e-redeem.ts",
-    "oracle:short": "tsx scripts/create-short-oracle.ts"
+    "e2e:redeem": "tsx scripts/e2e-redeem.ts"
   },
   "dependencies": {
     "@mysten/dapp-kit": "^1.0.6",

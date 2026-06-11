@@ -15,10 +15,6 @@ export const PREDICT_CONFIG = {
   DUSDC_CURRENCY_ID:
     "0xf3000dff421833d4bb8ed58fac146d691a3aaba2785aa1989af65a7089ca3e9c",
   SERVER_URL: "https://predict-server.testnet.mystenlabs.com",
-  // Admin-only: capability to create/activate/feed oracles. Owned by the protocol
-  // operator wallet. Used solely by scripts/create-short-oracle.ts (demo tool).
-  ORACLE_SVI_CAP:
-    "0x09c3dfff1abb4cd648753805c18a05bcc03d2a4c8f9f7a04b928568aed59f9e3",
 } as const;
 
 // ─── Scale Factors (verified via probe #3) ────────────────────────────────────
