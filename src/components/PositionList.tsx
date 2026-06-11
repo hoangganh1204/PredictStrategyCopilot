@@ -6,7 +6,7 @@ import type { Position } from "@/hooks/usePositions.js";
 import { PositionCard } from "./PositionCard.js";
 import { Pagination } from "./Pagination.js";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 6;
 
 function CardSkeleton() {
   return (
@@ -87,7 +87,7 @@ export function PositionList({ isLoading, positions, onRedeem, isRedeeming }: Po
       <div ref={topRef} className="scroll-mt-28" />
 
       {/* Keyed by page so cards re-trigger their entrance animation on flip */}
-      <div key={safePage} className="flex flex-col gap-3">
+      <div key={safePage} className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
         {visible.map((pos, idx) => (
           <PositionCard
             key={`${pos.oracle_id}-${pos.expiry}-${pos.strike ?? pos.lower_strike ?? idx}`}

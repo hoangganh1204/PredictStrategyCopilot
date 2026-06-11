@@ -78,7 +78,7 @@ export default function PositionsPage() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 py-6">
         {/* Title */}
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-bold tracking-tight text-zinc-100">My positions</h1>

@@ -60,7 +60,7 @@ export function StrategyList({ isLoading, data, stakeDusdc, onSelect, onBet, isB
   if (isLoading) {
     if (!showSkeleton) return null;
     return (
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <CardSkeleton />
         <CardSkeleton />
         <CardSkeleton />
@@ -99,18 +99,20 @@ export function StrategyList({ isLoading, data, stakeDusdc, onSelect, onBet, isB
   return (
     <div className="flex flex-col gap-3">
       <VolatilityBanner impliedVol={impliedVol} />
-      {strategies.map((s: ApiStrategy) => (
-        <StrategyCard
-          key={`${s.type}-${s.strike_raw ?? s.lowerStrike_raw}`}
-          strategy={s}
-          expiryMs={expiry}
-          stakeDusdc={stakeDusdc}
-          onSelect={onSelect}
-          onBet={onBet}
-          isBetting={isBetting}
-          isSelected={selectedType === s.type}
-        />
-      ))}
+      <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-3">
+        {strategies.map((s: ApiStrategy) => (
+          <StrategyCard
+            key={`${s.type}-${s.strike_raw ?? s.lowerStrike_raw}`}
+            strategy={s}
+            expiryMs={expiry}
+            stakeDusdc={stakeDusdc}
+            onSelect={onSelect}
+            onBet={onBet}
+            isBetting={isBetting}
+            isSelected={selectedType === s.type}
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -151,7 +151,7 @@ export default function PlayPage() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 py-6">
         {/* Title */}
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-bold tracking-tight text-zinc-100">Predict BTC price</h1>
@@ -165,12 +165,14 @@ export default function PlayPage() {
 
         {/* Step 1: deposit (only when game balance is zero) */}
         {!hasBalance && (
-          <StepCard step={1} title="Deposit DUSDC into game account">
-            <p className="mb-4 text-sm text-zinc-400">
-              Your funds live in an on-chain account. Deposit once to start betting.
-            </p>
-            <DepositForm />
-          </StepCard>
+          <div className="mx-auto w-full max-w-xl">
+            <StepCard step={1} title="Deposit DUSDC into game account">
+              <p className="mb-4 text-sm text-zinc-400">
+                Your funds live in an on-chain account. Deposit once to start betting.
+              </p>
+              <DepositForm />
+            </StepCard>
+          </div>
         )}
 
         {/* Step: choose amount + expiry */}
@@ -195,7 +197,7 @@ export default function PlayPage() {
         {/* Top-up: always available so the user can deposit more anytime */}
         {hasBalance &&
           (showDeposit ? (
-            <section className="card-surface animate-rise rounded-2xl border border-zinc-800 p-5">
+            <section className="card-surface animate-rise mx-auto w-full max-w-xl rounded-2xl border border-zinc-800 p-5">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-200">Add DUSDC</h2>
                 <button
@@ -210,7 +212,7 @@ export default function PlayPage() {
           ) : (
             <button
               onClick={() => setShowDeposit(true)}
-              className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
+              className="mx-auto flex w-fit items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 px-6 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
             >
               ＋ Add DUSDC
             </button>

@@ -18,7 +18,7 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-800/70 bg-zinc-950/70 backdrop-blur-lg">
-      <div className="mx-auto flex h-16 w-full max-w-3xl items-center justify-between gap-3 px-4">
+      <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-3 px-4">
         <div className="flex items-center gap-5">
           <Link href={account ? "/play" : "/"} className="shrink-0">
             <Logo />
