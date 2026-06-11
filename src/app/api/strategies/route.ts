@@ -105,6 +105,20 @@ export async function GET(req: NextRequest) {
     // Pulse is optional — omit it if the history endpoint is unavailable.
   }
 
+  // Recent settlement closes for this asset (real data) — last few settled markets.
+  const recentCloses = oracles
+    .filter(
+      (o) =>
+        o.underlying_asset === oracle.underlying_asset &&
+        o.status === "settled" &&
+        o.settlement_price != null &&
+        o.settled_at != null
+    )
+    .sort((a, b) => (b.settled_at ?? 0) - (a.settled_at ?? 0))
+    .slice(0, 5)
+    .map((o) => o.settlement_price as number)
+    .reverse(); // oldest → newest for display
+
   // Serialize bigints for JSON
   const strategies = result.strategies.map((s) => ({
     ...s,
@@ -121,6 +135,7 @@ export async function GET(req: NextRequest) {
     expiry: oracle.expiry,
     impliedVol: result.impliedVol,
     pulse,
+    recentCloses,
     strategies,
   });
 }

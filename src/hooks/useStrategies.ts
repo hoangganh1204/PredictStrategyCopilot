@@ -27,6 +27,8 @@ export interface StrategiesResponse {
   impliedVol: number;
   /** Current vol vs its recent norm. */
   pulse?: MarketPulse | null;
+  /** Settlement prices (scale 1e9) of the last few settled markets, oldest→newest. */
+  recentCloses?: number[];
   strategies: ApiStrategy[];
 }
 

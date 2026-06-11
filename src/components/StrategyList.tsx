@@ -3,7 +3,36 @@
 import { useEffect, useState } from "react";
 import type { ApiStrategy, MarketPulse, StrategiesResult } from "@/hooks/useStrategies.js";
 import { volLevel, VOL_META } from "@/lib/strategy/volLevel.js";
+import { formatPrice } from "@/lib/format.js";
 import { StrategyCard } from "./StrategyCard.js";
+
+/** Real settlement closes of the last few settled markets — shows live history. */
+function RecentCloses({ asset, closes }: { asset: string; closes: number[] }) {
+  if (closes.length < 2) return null;
+  const netUp = closes[closes.length - 1] >= closes[0];
+  const changePct = ((closes[closes.length - 1] - closes[0]) / closes[0]) * 100;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-zinc-800/70 bg-zinc-900/40 px-4 py-2 text-xs">
+      <span className="text-zinc-500">Recent {asset} closes</span>
+      <span className="flex items-center gap-1.5 font-mono text-zinc-400">
+        {closes.map((c, i) => (
+          <span key={i} className="flex items-center gap-1.5">
+            {i > 0 && (
+              <span className={closes[i] >= closes[i - 1] ? "text-emerald-500" : "text-red-500"}>
+                {closes[i] >= closes[i - 1] ? "↑" : "↓"}
+              </span>
+            )}
+            <span className={i === closes.length - 1 ? "text-zinc-200" : ""}>{formatPrice(c)}</span>
+          </span>
+        ))}
+      </span>
+      <span className={`ml-auto font-mono ${netUp ? "text-emerald-400" : "text-red-400"}`}>
+        {changePct >= 0 ? "+" : ""}
+        {changePct.toFixed(2)}%
+      </span>
+    </div>
+  );
+}
 
 const PULSE_META: Record<
   MarketPulse["level"],
@@ -147,11 +176,12 @@ export function StrategyList({ isLoading, data, asset, stakeDusdc, onSelect, onB
     );
   }
 
-  const { strategies, expiry, impliedVol, pulse } = data;
+  const { strategies, expiry, impliedVol, pulse, recentCloses } = data;
 
   return (
     <div className="flex flex-col gap-3">
       <MarketPulseBanner impliedVol={impliedVol} pulse={pulse} />
+      {recentCloses && <RecentCloses asset={asset} closes={recentCloses} />}
       <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-3">
         {strategies.map((s: ApiStrategy) => (
           <StrategyCard
