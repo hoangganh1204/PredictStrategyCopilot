@@ -68,6 +68,8 @@ export type PricingFn = (
 export interface StrategiesOk {
   ok: true;
   strategies: Strategy[];
+  /** Annualized at-the-money implied volatility (e.g. 0.42 = 42%/yr). */
+  impliedVol: number;
 }
 
 /** computeStrategies error result */

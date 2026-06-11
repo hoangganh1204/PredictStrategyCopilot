@@ -17,6 +17,8 @@ export interface StrategiesResponse {
   ok: true;
   oracle_id: string;
   expiry: number;
+  /** Annualized at-the-money implied volatility (e.g. 0.42 = 42%/yr). */
+  impliedVol: number;
   strategies: ApiStrategy[];
 }
 

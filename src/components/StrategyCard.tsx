@@ -11,9 +11,10 @@ interface TypeStyle {
   label: string;
   description: string;
   icon: string;
-  /** Tailwind classes for the icon chip + accent. */
+  /** Label for the prominent price/level box. */
+  levelTitle: string;
+  /** Tailwind classes for the icon chip + hover accent. */
   chip: string;
-  bar: string;
   ring: string;
 }
 
@@ -22,34 +23,27 @@ const TYPE_STYLES: Record<StrategyType, TypeStyle> = {
     label: "Price up",
     description: "Win if BTC rises above the predicted level at expiry.",
     icon: "↗",
+    levelTitle: "Wins if above",
     chip: "bg-emerald-500/15 text-emerald-400",
-    bar: "bg-emerald-500",
     ring: "hover:border-emerald-500/40",
   },
   binary_down: {
     label: "Crash hedge",
     description: "Win if BTC falls below the predicted level — a defensive play.",
     icon: "🛡",
+    levelTitle: "Wins if below",
     chip: "bg-amber-500/15 text-amber-400",
-    bar: "bg-amber-500",
     ring: "hover:border-amber-500/40",
   },
   range: {
     label: "Stay in range",
     description: "Win if BTC stays within a narrow band until expiry.",
     icon: "↔",
+    levelTitle: "Safe zone",
     chip: "bg-violet-500/15 text-violet-400",
-    bar: "bg-violet-500",
     ring: "hover:border-violet-500/40",
   },
 };
-
-/** Map win probability → a plain-language risk label. */
-function riskLabel(prob: number): { text: string; color: string } {
-  if (prob >= 0.55) return { text: "High chance", color: "text-emerald-400" };
-  if (prob >= 0.3) return { text: "Balanced", color: "text-zinc-300" };
-  return { text: "High risk · big reward", color: "text-amber-400" };
-}
 
 interface StrategyCardProps {
   strategy: ApiStrategy;
@@ -74,7 +68,7 @@ export function StrategyCard({
 }: StrategyCardProps) {
   const style = TYPE_STYLES[strategy.type];
   // cost_raw is the cost to mint 1 token; each token redeems 1 DUSDC on win
-  // (verified on testnet). Scale to the user's stake: spend = stake, win = stake / prob.
+  // (verified on testnet). Scale to the user's stake: spend = stake, win = stake / cost.
   const hasStake = stakeDusdc > 0;
   const econ = computeBetEconomics(stakeDusdc, Number(strategy.cost_raw));
   const cost = hasStake ? formatDusdcNumber(econ.stakeRaw) : "—";
@@ -82,13 +76,12 @@ export function StrategyCard({
   const profit = hasStake
     ? `${econ.profitRaw >= 0 ? "+" : ""}${formatDusdcNumber(econ.profitRaw)}`
     : "—";
-  const probPct = Math.round(strategy.prob * 100);
   const multiple = econ.stakeRaw > 0 ? econ.winRaw / econ.stakeRaw : 0;
-  const risk = riskLabel(strategy.prob);
   const remaining = useCountdown(expiryMs);
   const isExpired = remaining !== null && remaining <= 0;
 
-  const priceInfo =
+  // The price/level genuinely moves with the market — this is the headline number.
+  const levelValue =
     strategy.type === "range" && strategy.lowerStrike_raw && strategy.upperStrike_raw
       ? `${formatPrice(Number(strategy.lowerStrike_raw))} – ${formatPrice(Number(strategy.upperStrike_raw))}`
       : strategy.strike_raw
@@ -112,24 +105,18 @@ export function StrategyCard({
           {style.icon}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-semibold text-zinc-100">{style.label}</h3>
-            <span className={`shrink-0 text-xs font-medium ${risk.color}`}>{risk.text}</span>
-          </div>
+          <h3 className="font-semibold text-zinc-100">{style.label}</h3>
           <p className="mt-0.5 text-sm leading-relaxed text-zinc-400">{style.description}</p>
         </div>
       </div>
 
-      {/* Probability bar */}
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-zinc-500">Win chance</span>
-          <span className="font-mono text-zinc-300">{probPct}%</span>
+      {/* Price level — the headline number that moves with the market */}
+      {levelValue && (
+        <div className="flex items-center justify-between rounded-xl bg-zinc-900/60 px-3.5 py-3">
+          <span className="text-xs text-zinc-500">{style.levelTitle}</span>
+          <span className="font-mono text-base font-semibold text-zinc-100">{levelValue}</span>
         </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
-          <div className={`h-full rounded-full ${style.bar}`} style={{ width: `${probPct}%` }} />
-        </div>
-      </div>
+      )}
 
       {/* Economics */}
       <div className="grid grid-cols-3 gap-2 rounded-xl bg-zinc-900/60 p-3">
@@ -138,7 +125,7 @@ export function StrategyCard({
           <div className="mt-0.5 font-mono text-sm text-zinc-100">{cost}</div>
         </div>
         <div>
-          <div className="text-xs text-zinc-500">Win payout</div>
+          <div className="text-xs text-zinc-500">Max win</div>
           <div className="mt-0.5 font-mono text-sm text-emerald-400">{winPayout}</div>
         </div>
         <div>
@@ -150,13 +137,8 @@ export function StrategyCard({
         </div>
       </div>
 
-      {/* Meta */}
-      <div className="flex items-center justify-between text-xs">
-        {priceInfo ? (
-          <span className="text-zinc-500">
-            Price: <span className="text-zinc-300">{priceInfo}</span>
-          </span>
-        ) : <span />}
+      {/* Meta: time left */}
+      <div className="flex items-center justify-end text-xs">
         <span className="flex items-center gap-1.5 text-zinc-500">
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

@@ -2,7 +2,21 @@
 // Constitution III: loading skeleton appears only after 300ms.
 import { useEffect, useState } from "react";
 import type { ApiStrategy, StrategiesResult } from "@/hooks/useStrategies.js";
+import { volLevel, VOL_META } from "@/lib/strategy/volLevel.js";
 import { StrategyCard } from "./StrategyCard.js";
+
+function VolatilityBanner({ impliedVol }: { impliedVol: number }) {
+  const meta = VOL_META[volLevel(impliedVol)];
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-2.5">
+      <span className={`h-2 w-2 shrink-0 rounded-full ${meta.dot}`} />
+      <span className="text-sm text-zinc-300">
+        Market volatility: <span className={`font-medium ${meta.text}`}>{meta.label}</span>
+      </span>
+      <span className="ml-auto text-xs text-zinc-500">{meta.note}</span>
+    </div>
+  );
+}
 
 function CardSkeleton() {
   return (
@@ -80,10 +94,11 @@ export function StrategyList({ isLoading, data, stakeDusdc, onSelect, onBet, isB
     );
   }
 
-  const { strategies, expiry } = data;
+  const { strategies, expiry, impliedVol } = data;
 
   return (
     <div className="flex flex-col gap-3">
+      <VolatilityBanner impliedVol={impliedVol} />
       {strategies.map((s: ApiStrategy) => (
         <StrategyCard
           key={`${s.type}-${s.strike_raw ?? s.lowerStrike_raw}`}

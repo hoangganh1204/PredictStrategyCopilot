@@ -8,6 +8,7 @@ import type {
 } from "./types.js";
 import {
   computeSigmaMove,
+  computeImpliedVol,
   computeBinaryProb,
   computeRangeProb,
   timeToExpiryYears,
@@ -38,6 +39,8 @@ export async function computeStrategies(
 
   const T = timeToExpiryYears(snapshot.expiryMs);
   const sigmaMove = computeSigmaMove(snapshot.forward_raw, snapshot.svi, T);
+  // Annualized at-the-money implied vol — a live market signal (Low/Med/High).
+  const impliedVol = computeImpliedVol(snapshot.svi, 0, T);
 
   // Build grid from oracle min_strike + tick_size
   // Extend grid around spot ±3σ
@@ -125,5 +128,5 @@ export async function computeStrategies(
     return { ok: false, code: "ERR_NO_MARKET", message: "Could not price any strategy" };
   }
 
-  return { ok: true, strategies };
+  return { ok: true, strategies, impliedVol };
 }

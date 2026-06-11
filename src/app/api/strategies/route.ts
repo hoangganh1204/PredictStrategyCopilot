@@ -106,6 +106,7 @@ export async function GET(req: NextRequest) {
     ok: true,
     oracle_id: oracle.oracle_id,
     expiry: oracle.expiry,
+    impliedVol: result.impliedVol,
     strategies,
   });
 }
