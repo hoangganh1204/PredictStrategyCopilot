@@ -7,6 +7,7 @@ export function tradingViewSymbol(asset: string): string {
     BTC: "BINANCE:BTCUSDT",
     ETH: "BINANCE:ETHUSDT",
     SOL: "BINANCE:SOLUSDT",
+    SUI: "BINANCE:SUIUSDT",
   };
   return map[asset] ?? `BINANCE:${asset}USDT`;
 }
