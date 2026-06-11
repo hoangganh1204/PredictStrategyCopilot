@@ -45,6 +45,32 @@ const TYPE_STYLES: Record<StrategyType, TypeStyle> = {
   },
 };
 
+/** One metric row: label on the left, value (mono) on the right — never wraps. */
+function StatRow({
+  label,
+  value,
+  valueClass,
+  unit,
+  extra,
+}: {
+  label: string;
+  value: string;
+  valueClass: string;
+  unit: boolean;
+  extra?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-zinc-500">{label}</span>
+      <span className={`whitespace-nowrap font-mono ${valueClass}`}>
+        {value}
+        {unit && <span className="text-zinc-500"> DUSDC</span>}
+        {extra && <span className="text-zinc-500"> {extra}</span>}
+      </span>
+    </div>
+  );
+}
+
 interface StrategyCardProps {
   strategy: ApiStrategy;
   expiryMs: number;
@@ -71,11 +97,11 @@ export function StrategyCard({
   // (verified on testnet). Scale to the user's stake: spend = stake, win = stake / cost.
   const hasStake = stakeDusdc > 0;
   const econ = computeBetEconomics(stakeDusdc, Number(strategy.cost_raw));
-  const cost = hasStake ? formatDusdcNumber(econ.stakeRaw) : "—";
-  const winPayout = hasStake ? formatDusdcNumber(econ.winRaw) : "—";
-  const profit = hasStake
-    ? `${econ.profitRaw >= 0 ? "+" : ""}${formatDusdcNumber(econ.profitRaw)}`
-    : "—";
+  // Number only (unit rendered separately and muted, so it never wraps awkwardly).
+  const num = (raw: number) => formatDusdcNumber(raw).replace(" DUSDC", "");
+  const cost = hasStake ? num(econ.stakeRaw) : "—";
+  const winPayout = hasStake ? num(econ.winRaw) : "—";
+  const profit = hasStake ? `${econ.profitRaw >= 0 ? "+" : ""}${num(econ.profitRaw)}` : "—";
   const multiple = econ.stakeRaw > 0 ? econ.winRaw / econ.stakeRaw : 0;
   const remaining = useCountdown(expiryMs);
   const isExpired = remaining !== null && remaining <= 0;
@@ -118,23 +144,17 @@ export function StrategyCard({
         </div>
       )}
 
-      {/* Economics */}
-      <div className="grid grid-cols-3 gap-2 rounded-xl bg-zinc-900/60 p-3">
-        <div>
-          <div className="text-xs text-zinc-500">You pay</div>
-          <div className="mt-0.5 font-mono text-sm text-zinc-100">{cost}</div>
-        </div>
-        <div>
-          <div className="text-xs text-zinc-500">Max win</div>
-          <div className="mt-0.5 font-mono text-sm text-emerald-400">{winPayout}</div>
-        </div>
-        <div>
-          <div className="text-xs text-zinc-500">Profit · mult.</div>
-          <div className="mt-0.5 font-mono text-sm text-emerald-400">
-            {profit}
-            {hasStake && <span className="text-zinc-500"> ·{multiple.toFixed(1)}x</span>}
-          </div>
-        </div>
+      {/* Economics — vertical rows so the value + unit never wrap */}
+      <div className="flex flex-col gap-2.5 rounded-xl bg-zinc-900/60 p-3.5 text-sm">
+        <StatRow label="You pay" value={cost} valueClass="text-zinc-100" unit={hasStake} />
+        <StatRow label="Max win" value={winPayout} valueClass="text-emerald-400" unit={hasStake} />
+        <StatRow
+          label="Profit"
+          value={profit}
+          valueClass="text-emerald-400"
+          unit={hasStake}
+          extra={hasStake ? `· ${multiple.toFixed(1)}x` : undefined}
+        />
       </div>
 
       {/* Meta: time left */}
