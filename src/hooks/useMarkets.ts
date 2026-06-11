@@ -6,6 +6,8 @@ import { formatDuration } from "@/lib/format.js";
 export interface Market {
   oracleId: string;
   expiryMs: number;
+  /** Underlying asset, e.g. "BTC", "ETH", "SOL". */
+  asset: string;
 }
 
 interface MarketsResponse {
@@ -26,16 +28,16 @@ export function useMarkets() {
       if (!body.ok) return [];
 
       // Several oracles can share the same display label (e.g. two markets ~30min
-      // apart both read "8d 4h"). Collapse same-label markets, keeping the soonest,
-      // so the selector shows no visual duplicates.
+      // apart both read "8d 4h"). Collapse same-label markets per asset, keeping the
+      // soonest, so each asset's selector shows no visual duplicates.
       const now = Date.now();
       const seen = new Set<string>();
       const markets: Market[] = [];
       for (const m of [...body.markets].sort((a, b) => a.expiry - b.expiry)) {
-        const label = formatDuration(m.expiry - now);
-        if (seen.has(label)) continue;
-        seen.add(label);
-        markets.push({ oracleId: m.oracle_id, expiryMs: m.expiry });
+        const key = `${m.underlying_asset}|${formatDuration(m.expiry - now)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        markets.push({ oracleId: m.oracle_id, expiryMs: m.expiry, asset: m.underlying_asset });
       }
       return markets;
     },

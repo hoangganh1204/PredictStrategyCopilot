@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { tradingViewSymbol } from "@/lib/assets.js";
 
 declare global {
   interface Window {
@@ -7,10 +8,12 @@ declare global {
   }
 }
 
-const CONTAINER_ID = "tv_btc_chart";
+const CONTAINER_ID = "tv_price_chart";
 const SCRIPT_ID = "tv-widget-script";
 
-export function PriceChart() {
+export function PriceChart({ asset }: { asset: string }) {
+  const symbol = tradingViewSymbol(asset);
+
   useEffect(() => {
     function createWidget() {
       const el = document.getElementById(CONTAINER_ID);
@@ -19,12 +22,12 @@ export function PriceChart() {
       new window.TradingView.widget({
         container_id: CONTAINER_ID,
         autosize: true,
-        symbol: "BINANCE:BTCUSDT",
+        symbol,
         interval: "15",
-        timezone: "Asia/Ho_Chi_Minh",
+        timezone: "Etc/UTC",
         theme: "dark",
         style: "1",
-        locale: "vi",
+        locale: "en",
         enable_publishing: false,
         hide_side_toolbar: true,
         allow_symbol_change: false,
@@ -55,7 +58,7 @@ export function PriceChart() {
       }, 100);
       return () => clearInterval(timer);
     }
-  }, []);
+  }, [symbol]);
 
   return (
     <div className="rounded-2xl border border-zinc-800 overflow-hidden" style={{ height: 380 }}>

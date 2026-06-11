@@ -28,6 +28,7 @@ interface OracleInfo {
   status: string;
   expiry: number;
   settlement_price: number | null;
+  underlying_asset: string;
 }
 
 export const RANGE_POSITIONS_KEY = ["range-positions"] as const;
@@ -109,7 +110,7 @@ export function useRangePositions() {
           predict_id: j.predict_id ?? "",
           manager_id: managerId,
           oracle_id: j.oracle_id,
-          underlying_asset: "BTC",
+          underlying_asset: oracles[j.oracle_id]?.underlying_asset ?? "BTC",
           expiry: Number(j.expiry),
           lower_strike: lower,
           higher_strike: higher,

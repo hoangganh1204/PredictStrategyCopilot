@@ -9,7 +9,8 @@ type StrategyType = ApiStrategy["type"];
 
 interface TypeStyle {
   label: string;
-  description: string;
+  /** Description templated with the underlying asset (e.g. BTC/ETH/SOL). */
+  describe: (asset: string) => string;
   icon: string;
   /** Label for the prominent price/level box. */
   levelTitle: string;
@@ -21,7 +22,7 @@ interface TypeStyle {
 const TYPE_STYLES: Record<StrategyType, TypeStyle> = {
   binary_up: {
     label: "Price up",
-    description: "Win if BTC rises above the predicted level at expiry.",
+    describe: (a) => `Win if ${a} rises above the predicted level at expiry.`,
     icon: "↗",
     levelTitle: "Wins if above",
     chip: "bg-emerald-500/15 text-emerald-400",
@@ -29,7 +30,7 @@ const TYPE_STYLES: Record<StrategyType, TypeStyle> = {
   },
   binary_down: {
     label: "Crash hedge",
-    description: "Win if BTC falls below the predicted level — a defensive play.",
+    describe: (a) => `Win if ${a} falls below the predicted level — a defensive play.`,
     icon: "🛡",
     levelTitle: "Wins if below",
     chip: "bg-amber-500/15 text-amber-400",
@@ -37,7 +38,7 @@ const TYPE_STYLES: Record<StrategyType, TypeStyle> = {
   },
   range: {
     label: "Stay in range",
-    description: "Win if BTC stays within a narrow band until expiry.",
+    describe: (a) => `Win if ${a} stays within a narrow band until expiry.`,
     icon: "↔",
     levelTitle: "Safe zone",
     chip: "bg-violet-500/15 text-violet-400",
@@ -76,6 +77,8 @@ function StatRow({
 interface StrategyCardProps {
   strategy: ApiStrategy;
   expiryMs: number;
+  /** Underlying asset for plain-language copy (e.g. "BTC"). */
+  asset: string;
   /** DUSDC the user wants to spend (stake). Scales cost/win/profit on the card. */
   stakeDusdc: number;
   onSelect?: (strategy: ApiStrategy) => void;
@@ -88,6 +91,7 @@ interface StrategyCardProps {
 export function StrategyCard({
   strategy,
   expiryMs,
+  asset,
   stakeDusdc,
   onSelect,
   onBet,
@@ -134,7 +138,7 @@ export function StrategyCard({
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-zinc-100">{style.label}</h3>
-          <p className="mt-0.5 text-sm leading-relaxed text-zinc-400">{style.description}</p>
+          <p className="mt-0.5 text-sm leading-relaxed text-zinc-400">{style.describe(asset)}</p>
         </div>
       </div>
 

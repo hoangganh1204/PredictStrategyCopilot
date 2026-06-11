@@ -74,7 +74,9 @@ export function PositionCard({ position, onRedeem, isRedeeming }: PositionCardPr
               {statusLabel}
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-zinc-500">Price: {priceInfo}</p>
+          <p className="mt-0.5 text-xs text-zinc-500">
+            <span className="text-zinc-400">{position.underlying_asset}</span> · {priceInfo}
+          </p>
         </div>
       </div>
 

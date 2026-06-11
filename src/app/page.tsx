@@ -24,7 +24,7 @@ const STEPS = [
 ];
 
 const FEATURES = [
-  "Real BTC price & market volatility, updated continuously",
+  "Real prices & market volatility, updated continuously",
   "No jargon — bet price up, stay flat, or hedge a crash",
   "Real transactions on Sui testnet, signed by your own wallet",
 ];
@@ -49,7 +49,7 @@ export default function HomePage() {
             Sui Testnet · DeepBook Predict
           </span>
           <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-            Predict BTC price,{" "}
+            Predict crypto prices,{" "}
             <span className="text-gradient">as simple as a bet</span>
           </h1>
           <p className="max-w-md text-lg text-zinc-400">

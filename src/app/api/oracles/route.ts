@@ -15,6 +15,7 @@ export async function GET() {
         status: o.status,
         expiry: o.expiry,
         settlement_price: o.settlement_price,
+        underlying_asset: o.underlying_asset,
       })),
     });
   } catch {

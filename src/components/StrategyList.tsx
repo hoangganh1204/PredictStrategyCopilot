@@ -35,6 +35,8 @@ function CardSkeleton() {
 interface StrategyListProps {
   isLoading: boolean;
   data: StrategiesResult | undefined;
+  /** Underlying asset for plain-language copy (e.g. "BTC"). */
+  asset: string;
   /** DUSDC the user wants to spend — scales each card's cost/win/profit. */
   stakeDusdc: number;
   onSelect?: (strategy: ApiStrategy) => void;
@@ -43,7 +45,7 @@ interface StrategyListProps {
   selectedType?: ApiStrategy["type"] | null;
 }
 
-export function StrategyList({ isLoading, data, stakeDusdc, onSelect, onBet, isBetting, selectedType }: StrategyListProps) {
+export function StrategyList({ isLoading, data, asset, stakeDusdc, onSelect, onBet, isBetting, selectedType }: StrategyListProps) {
   // Delay skeleton to 300ms to avoid flash on fast connections (Constitution III)
   const [showSkeleton, setShowSkeleton] = useState(false);
 
@@ -105,6 +107,7 @@ export function StrategyList({ isLoading, data, stakeDusdc, onSelect, onBet, isB
             key={`${s.type}-${s.strike_raw ?? s.lowerStrike_raw}`}
             strategy={s}
             expiryMs={expiry}
+            asset={asset}
             stakeDusdc={stakeDusdc}
             onSelect={onSelect}
             onBet={onBet}

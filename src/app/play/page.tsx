@@ -57,6 +57,7 @@ export default function PlayPage() {
   const { data: markets, isLoading: marketsLoading } = useMarkets();
 
   const [amount, setAmount] = useState("");
+  const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
   const [selectedOracleId, setSelectedOracleId] = useState<string | null>(null);
   const [overlayResult, setOverlayResult] = useState<TxResult | null>(null);
   const [showDeposit, setShowDeposit] = useState(false);
@@ -64,8 +65,17 @@ export default function PlayPage() {
   const maxBalance = balance?.balance_dusdc ?? 0;
   const managerId = balance?.managerId;
   const hasBalance = maxBalance > 0;
-  // Default to the soonest market until the user picks another.
-  const activeOracleId = selectedOracleId ?? markets?.[0]?.oracleId ?? null;
+
+  // Distinct assets that currently have open markets (BTC, ETH, SOL, ...).
+  const assets = Array.from(new Set((markets ?? []).map((m) => m.asset)));
+  const activeAsset =
+    selectedAsset && assets.includes(selectedAsset) ? selectedAsset : assets[0] ?? null;
+  const assetMarkets = (markets ?? []).filter((m) => m.asset === activeAsset);
+  // Default to the soonest market of the active asset until the user picks another.
+  const activeOracleId =
+    selectedOracleId && assetMarkets.some((m) => m.oracleId === selectedOracleId)
+      ? selectedOracleId
+      : assetMarkets[0]?.oracleId ?? null;
 
   // Strategies depend only on the market — they load as soon as one is selected.
   const { data: strategies, isLoading, dataUpdatedAt, refetch } = useStrategies(activeOracleId);
@@ -154,14 +164,39 @@ export default function PlayPage() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 py-6">
         {/* Title */}
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-zinc-100">Predict BTC price</h1>
+          <h1 className="text-xl font-bold tracking-tight text-zinc-100">
+            Predict {activeAsset ?? "crypto"} price
+          </h1>
           <p className="text-sm text-zinc-500">
             Pick an amount, review the suggestions, and bet with a single signature.
           </p>
         </div>
 
-        {/* BTC price chart */}
-        <PriceChart />
+        {/* Asset selector — the assets that currently have open markets */}
+        {assets.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-zinc-500">Asset</span>
+            {assets.map((a) => (
+              <button
+                key={a}
+                onClick={() => {
+                  setSelectedAsset(a);
+                  setSelectedOracleId(null);
+                }}
+                className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                  a === activeAsset
+                    ? "bg-zinc-700 text-zinc-100 ring-1 ring-zinc-600"
+                    : "bg-zinc-900/60 text-zinc-400 hover:bg-zinc-800"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Price chart for the selected asset */}
+        <PriceChart asset={activeAsset ?? "BTC"} />
 
         {/* Step 1: deposit (only when game balance is zero) */}
         {!hasBalance && (
@@ -185,7 +220,7 @@ export default function PlayPage() {
             <AmountInput
               amount={amount}
               maxBalance={maxBalance}
-              markets={markets ?? []}
+              markets={assetMarkets}
               marketsLoading={marketsLoading}
               selectedOracleId={activeOracleId}
               onAmountChange={setAmount}
@@ -236,6 +271,7 @@ export default function PlayPage() {
             <StrategyList
               isLoading={isLoading}
               data={strategies}
+              asset={activeAsset ?? "BTC"}
               stakeDusdc={validStake}
               onBet={handleBet}
               isBetting={isPending}
