@@ -60,6 +60,18 @@ export function PositionCard({ position, onRedeem, isRedeeming }: PositionCardPr
   const priceInfo = getPriceInfo(position);
 
   const expiryMs = position.expiry;
+  const isWin = positionState === "settled_won" || positionState === "redeemed";
+  const isSettled = isWin || positionState === "settled_lost";
+
+  // Viral loop: open an X (Twitter) intent pre-filled with the result + app link.
+  function handleShare() {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const text = isWin
+      ? `🎉 Just won ${formatDusdcNumber(position.realized_pnl)} with "${betType.label}" on DeepBook Predict!`
+      : `I'm predicting ${position.underlying_asset} prices with Predict Copilot on DeepBook Predict 📈`;
+    const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(origin)}`;
+    window.open(intent, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <div className="card-surface animate-rise flex flex-col gap-3 rounded-2xl border border-zinc-800 p-5">
@@ -143,6 +155,19 @@ export function PositionCard({ position, onRedeem, isRedeeming }: PositionCardPr
         <p className="text-center text-xs text-zinc-500">
           Not a win this time — try another strategy?
         </p>
+      )}
+
+      {/* Share to X — viral loop after any settled outcome */}
+      {isSettled && (
+        <button
+          onClick={handleShare}
+          className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:bg-zinc-800/60"
+        >
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+          Share on X
+        </button>
       )}
     </div>
   );
