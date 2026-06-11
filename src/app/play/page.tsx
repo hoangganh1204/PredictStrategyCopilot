@@ -104,45 +104,57 @@ export default function PlayPage() {
 
   // T045 + T047: build and execute the mint PTB
   async function handleBet(strategy: ApiStrategy) {
-    if (!managerId || !strategies?.ok || validStake <= 0) return;
+    if (!managerId || validStake <= 0) return;
 
-    // FR-006c: block betting on volatility data older than 30s; refresh first.
-    if (Date.now() - dataUpdatedAt > SVI_STALENESS_MS) {
-      await refetch();
+    // FR-006c: never bet on volatility data older than 30s. Instead of bouncing
+    // the user, silently refetch and place the bet with the live data.
+    let live = strategies;
+    if (!live?.ok || Date.now() - dataUpdatedAt > SVI_STALENESS_MS) {
+      live = (await refetch()).data;
+    }
+    if (!live?.ok) {
       setOverlayResult({
         status: "failed",
-        error: "Volatility data was stale. Refreshed — please place the bet again.",
+        error: "Market data is unavailable right now — please try again in a few seconds.",
+      });
+      return;
+    }
+    const liveStrategy = live.strategies.find((s) => s.type === strategy.type);
+    if (!liveStrategy) {
+      setOverlayResult({
+        status: "failed",
+        error: "This strategy is no longer available on the current market.",
       });
       return;
     }
 
-    const { oracle_id, expiry: expiryMs } = strategies;
+    const { oracle_id, expiry: expiryMs } = live;
     // User stake = amount they spend; derive token quantity from the per-token cost
     // so the actual mint cost ≈ stake. Each token redeems 1 DUSDC on win.
     const { quantityRaw: quantity_raw } = computeBetEconomics(
       validStake,
-      Number(strategy.cost_raw)
+      Number(liveStrategy.cost_raw)
     );
     if (quantity_raw <= 0n) return;
 
     let tx;
-    if (strategy.type === "range") {
-      if (!strategy.lowerStrike_raw || !strategy.upperStrike_raw) return;
+    if (liveStrategy.type === "range") {
+      if (!liveStrategy.lowerStrike_raw || !liveStrategy.upperStrike_raw) return;
       tx = buildRangeMintTx({
         oracleId: oracle_id,
         managerId,
-        lowerStrike_raw: BigInt(strategy.lowerStrike_raw),
-        upperStrike_raw: BigInt(strategy.upperStrike_raw),
+        lowerStrike_raw: BigInt(liveStrategy.lowerStrike_raw),
+        upperStrike_raw: BigInt(liveStrategy.upperStrike_raw),
         quantity_raw,
         expiryMs,
       });
     } else {
-      if (!strategy.strike_raw) return;
+      if (!liveStrategy.strike_raw) return;
       tx = buildBinaryMintTx({
         oracleId: oracle_id,
         managerId,
-        strike_raw: BigInt(strategy.strike_raw),
-        isUp: strategy.type === "binary_up",
+        strike_raw: BigInt(liveStrategy.strike_raw),
+        isUp: liveStrategy.type === "binary_up",
         quantity_raw,
         expiryMs,
       });

@@ -101,6 +101,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function signAndExecute(tx: Transaction): Promise<string> {
   tx.setSender(keeperAddress);
+  // Use all SUI coins as gas (the SDK may otherwise pick a single small coin
+  // and fail the budget check after a faucet top-up created a separate coin).
+  const gas = await client.getCoins({ owner: keeperAddress, coinType: "0x2::sui::SUI" });
+  if (gas.data.length > 0) {
+    tx.setGasPayment(
+      gas.data.slice(0, 16).map((c) => ({ objectId: c.coinObjectId, version: c.version, digest: c.digest }))
+    );
+  }
   const { bytes, signature } = await tx.sign({ signer: keypair, client });
   const res = await client.executeTransactionBlock({
     transactionBlock: bytes,

@@ -47,6 +47,9 @@ export function useStrategies(oracleId: string | null) {
     queryKey: [...STRATEGIES_KEY, oracleId],
     enabled: !!oracleId,
     staleTime: 30_000,
+    // Keep SVI well under the 30s staleness limit so the bet-time guard
+    // (FR-006c) almost never has to block a click.
+    refetchInterval: 15_000,
     queryFn: async () => {
       // The computed strategies are per-token and do NOT depend on the stake — the
       // UI scales cost/payout by the live amount. Send a stub amount to satisfy the
