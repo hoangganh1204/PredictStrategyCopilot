@@ -1,6 +1,7 @@
 "use client";
 // Lists the open prediction markets (active oracles) for the expiry selector.
 import { useQuery } from "@tanstack/react-query";
+import { formatDuration } from "@/lib/format.js";
 
 export interface Market {
   oracleId: string;
@@ -23,7 +24,20 @@ export function useMarkets() {
       const res = await fetch("/api/markets");
       const body = (await res.json()) as MarketsResponse;
       if (!body.ok) return [];
-      return body.markets.map((m) => ({ oracleId: m.oracle_id, expiryMs: m.expiry }));
+
+      // Several oracles can share the same display label (e.g. two markets ~30min
+      // apart both read "8d 4h"). Collapse same-label markets, keeping the soonest,
+      // so the selector shows no visual duplicates.
+      const now = Date.now();
+      const seen = new Set<string>();
+      const markets: Market[] = [];
+      for (const m of [...body.markets].sort((a, b) => a.expiry - b.expiry)) {
+        const label = formatDuration(m.expiry - now);
+        if (seen.has(label)) continue;
+        seen.add(label);
+        markets.push({ oracleId: m.oracle_id, expiryMs: m.expiry });
+      }
+      return markets;
     },
   });
 }
