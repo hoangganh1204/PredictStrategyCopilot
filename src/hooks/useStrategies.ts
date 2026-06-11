@@ -13,12 +13,20 @@ export interface ApiStrategy {
   prob: number;
 }
 
+export interface MarketPulse {
+  averageVol: number;
+  deltaPct: number;
+  level: "elevated" | "subdued" | "steady";
+}
+
 export interface StrategiesResponse {
   ok: true;
   oracle_id: string;
   expiry: number;
   /** Annualized at-the-money implied volatility (e.g. 0.42 = 42%/yr). */
   impliedVol: number;
+  /** Current vol vs its recent norm. */
+  pulse?: MarketPulse | null;
   strategies: ApiStrategy[];
 }
 

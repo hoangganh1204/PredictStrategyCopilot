@@ -1,19 +1,70 @@
 "use client";
 // Constitution III: loading skeleton appears only after 300ms.
 import { useEffect, useState } from "react";
-import type { ApiStrategy, StrategiesResult } from "@/hooks/useStrategies.js";
+import type { ApiStrategy, MarketPulse, StrategiesResult } from "@/hooks/useStrategies.js";
 import { volLevel, VOL_META } from "@/lib/strategy/volLevel.js";
 import { StrategyCard } from "./StrategyCard.js";
 
-function VolatilityBanner({ impliedVol }: { impliedVol: number }) {
-  const meta = VOL_META[volLevel(impliedVol)];
+const PULSE_META: Record<
+  MarketPulse["level"],
+  { icon: string; text: string; title: string; note: string }
+> = {
+  elevated: {
+    icon: "⚡",
+    text: "text-amber-400",
+    title: "Volatility running high",
+    note: "Market is nervous — wider ranges, pricier crash hedges",
+  },
+  subdued: {
+    icon: "🟢",
+    text: "text-emerald-400",
+    title: "Volatility below normal",
+    note: "Calmer than usual — tighter ranges, cheaper bets",
+  },
+  steady: {
+    icon: "〰️",
+    text: "text-zinc-300",
+    title: "Volatility steady",
+    note: "In line with its recent average",
+  },
+};
+
+/** Market Pulse: current vol vs its recent norm. Falls back to absolute level. */
+function MarketPulseBanner({ impliedVol, pulse }: { impliedVol: number; pulse?: MarketPulse | null }) {
+  const volPct = `${Math.round(impliedVol * 100)}%`;
+
+  if (!pulse) {
+    const meta = VOL_META[volLevel(impliedVol)];
+    return (
+      <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-2.5">
+        <span className={`h-2 w-2 shrink-0 rounded-full ${meta.dot}`} />
+        <span className="text-sm text-zinc-300">
+          Market volatility: <span className={`font-medium ${meta.text}`}>{meta.label}</span>
+        </span>
+        <span className="ml-auto text-xs text-zinc-500">{meta.note}</span>
+      </div>
+    );
+  }
+
+  const meta = PULSE_META[pulse.level];
+  const sign = pulse.deltaPct >= 0 ? "+" : "";
   return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-2.5">
-      <span className={`h-2 w-2 shrink-0 rounded-full ${meta.dot}`} />
-      <span className="text-sm text-zinc-300">
-        Market volatility: <span className={`font-medium ${meta.text}`}>{meta.label}</span>
-      </span>
-      <span className="ml-auto text-xs text-zinc-500">{meta.note}</span>
+    <div className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
+      <span className="text-lg leading-none">{meta.icon}</span>
+      <div className="min-w-0 flex-1">
+        <div className={`text-sm font-medium ${meta.text}`}>{meta.title}</div>
+        <div className="text-xs text-zinc-500">{meta.note}</div>
+      </div>
+      <div className="text-right">
+        <div className="font-mono text-sm text-zinc-200">
+          {volPct}
+          <span className="text-zinc-600">/yr</span>
+        </div>
+        <div className="text-xs text-zinc-500">
+          {sign}
+          {pulse.deltaPct.toFixed(0)}% vs avg
+        </div>
+      </div>
     </div>
   );
 }
@@ -96,11 +147,11 @@ export function StrategyList({ isLoading, data, asset, stakeDusdc, onSelect, onB
     );
   }
 
-  const { strategies, expiry, impliedVol } = data;
+  const { strategies, expiry, impliedVol, pulse } = data;
 
   return (
     <div className="flex flex-col gap-3">
-      <VolatilityBanner impliedVol={impliedVol} />
+      <MarketPulseBanner impliedVol={impliedVol} pulse={pulse} />
       <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-3">
         {strategies.map((s: ApiStrategy) => (
           <StrategyCard

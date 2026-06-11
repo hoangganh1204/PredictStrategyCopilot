@@ -70,6 +70,8 @@ export interface StrategiesOk {
   strategies: Strategy[];
   /** Annualized at-the-money implied volatility (e.g. 0.42 = 42%/yr). */
   impliedVol: number;
+  /** Current vol vs its recent norm (added by the API route). */
+  pulse?: import("./marketPulse.js").MarketPulse | null;
 }
 
 /** computeStrategies error result */

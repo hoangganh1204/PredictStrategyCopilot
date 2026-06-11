@@ -45,6 +45,11 @@ export function fetchSviLatest(oracleId: string): Promise<SviLatestResponse> {
   return get(`/oracles/${oracleId}/svi/latest`);
 }
 
+/** Recent SVI snapshots (newest first) — used to gauge current vol vs its norm. */
+export function fetchSviHistory(oracleId: string): Promise<SviLatestResponse[]> {
+  return get(`/oracles/${oracleId}/svi`);
+}
+
 export function fetchAskBounds(oracleId: string): Promise<AskBoundsResponse | null> {
   return get(`/oracles/${oracleId}/ask-bounds`);
 }

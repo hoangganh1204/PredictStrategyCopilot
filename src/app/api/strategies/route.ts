@@ -5,8 +5,11 @@ import {
   fetchOracleList,
   fetchOracleState,
   fetchSviLatest,
+  fetchSviHistory,
 } from "@/lib/predict-client.js";
 import { computeStrategies } from "@/lib/strategy/computeStrategies.js";
+import { computeMarketPulse } from "@/lib/strategy/marketPulse.js";
+import { computeImpliedVol, timeToExpiryYears } from "@/lib/strategy/sviMath.js";
 import { makeDevInspectPricingFn } from "@/lib/strategy/devInspectPricing.js";
 import type { OracleSnapshot, SVIParams } from "@/lib/strategy/types.js";
 
@@ -92,6 +95,16 @@ export async function GET(req: NextRequest) {
     return errorResponse(result.code, result.message, status);
   }
 
+  // Market Pulse: compare current vol against its recent norm (best-effort).
+  let pulse = null;
+  try {
+    const history = await fetchSviHistory(oracle.oracle_id);
+    const currentVol = computeImpliedVol(sviParams, 0, timeToExpiryYears(oracle.expiry));
+    pulse = computeMarketPulse(history, oracle.expiry, currentVol);
+  } catch {
+    // Pulse is optional — omit it if the history endpoint is unavailable.
+  }
+
   // Serialize bigints for JSON
   const strategies = result.strategies.map((s) => ({
     ...s,
@@ -107,6 +120,7 @@ export async function GET(req: NextRequest) {
     oracle_id: oracle.oracle_id,
     expiry: oracle.expiry,
     impliedVol: result.impliedVol,
+    pulse,
     strategies,
   });
 }
