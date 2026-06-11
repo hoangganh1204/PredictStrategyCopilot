@@ -17,6 +17,7 @@ import { useExecuteTx } from "@/hooks/useExecuteTx.js";
 import { useStrategies, type ApiStrategy } from "@/hooks/useStrategies.js";
 import { buildBinaryMintTx, buildRangeMintTx } from "@/lib/execute/buildMintTx.js";
 import { computeBetEconomics } from "@/lib/strategy/sizing.js";
+import { SUPPORTED_ASSETS } from "@/lib/assets.js";
 import { SVI_STALENESS_MS } from "@/config/predict.js";
 import type { TxResult } from "@/lib/execute/types.js";
 
@@ -66,11 +67,15 @@ export default function PlayPage() {
   const managerId = balance?.managerId;
   const hasBalance = maxBalance > 0;
 
-  // Distinct assets that currently have open markets (BTC, ETH, SOL, ...).
-  const assets = Array.from(new Set((markets ?? []).map((m) => m.asset)));
+  // Asset selector: always offer the supported assets (so the chart is browsable
+  // even with no markets), plus any extra asset that does have an open market.
+  const assetsWithMarkets = Array.from(new Set((markets ?? []).map((m) => m.asset)));
+  const allAssets = Array.from(new Set([...SUPPORTED_ASSETS, ...assetsWithMarkets]));
+  const defaultAsset = assetsWithMarkets[0] ?? allAssets[0] ?? "BTC";
   const activeAsset =
-    selectedAsset && assets.includes(selectedAsset) ? selectedAsset : assets[0] ?? null;
+    selectedAsset && allAssets.includes(selectedAsset) ? selectedAsset : defaultAsset;
   const assetMarkets = (markets ?? []).filter((m) => m.asset === activeAsset);
+  const activeHasMarkets = assetMarkets.length > 0;
   // Default to the soonest market of the active asset until the user picks another.
   const activeOracleId =
     selectedOracleId && assetMarkets.some((m) => m.oracleId === selectedOracleId)
@@ -165,38 +170,40 @@ export default function PlayPage() {
         {/* Title */}
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-bold tracking-tight text-zinc-100">
-            Predict {activeAsset ?? "crypto"} price
+            Predict {activeAsset} price
           </h1>
           <p className="text-sm text-zinc-500">
             Pick an amount, review the suggestions, and bet with a single signature.
           </p>
         </div>
 
-        {/* Asset selector — the assets that currently have open markets */}
-        {assets.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-zinc-500">Asset</span>
-            {assets.map((a) => (
+        {/* Asset selector — supported assets; ones without open markets are chart-only */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-zinc-500">Asset</span>
+          {allAssets.map((a) => {
+            const live = assetsWithMarkets.includes(a);
+            return (
               <button
                 key={a}
                 onClick={() => {
                   setSelectedAsset(a);
                   setSelectedOracleId(null);
                 }}
-                className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
                   a === activeAsset
                     ? "bg-zinc-700 text-zinc-100 ring-1 ring-zinc-600"
                     : "bg-zinc-900/60 text-zinc-400 hover:bg-zinc-800"
                 }`}
               >
+                <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-emerald-400" : "bg-zinc-600"}`} />
                 {a}
               </button>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
 
-        {/* Price chart for the selected asset */}
-        <PriceChart asset={activeAsset ?? "BTC"} />
+        {/* Price chart for the selected asset (works for any asset) */}
+        <PriceChart asset={activeAsset} />
 
         {/* Step 1: deposit (only when game balance is zero) */}
         {!hasBalance && (
@@ -210,8 +217,19 @@ export default function PlayPage() {
           </div>
         )}
 
+        {/* No betting markets for this asset yet — chart-only */}
+        {hasBalance && !activeHasMarkets && !marketsLoading && (
+          <div className="card-surface rounded-2xl border border-zinc-800 p-6 text-center">
+            <p className="font-medium text-zinc-300">No open markets for {activeAsset} yet</p>
+            <p className="mx-auto mt-1 max-w-md text-sm text-zinc-500">
+              You can still watch the chart above. Betting opens when {activeAsset} markets are
+              listed — pick an asset with a green dot (e.g. BTC) to place a bet now.
+            </p>
+          </div>
+        )}
+
         {/* Step: choose amount + expiry (with inline top-up) */}
-        {hasBalance && (
+        {hasBalance && activeHasMarkets && (
           <StepCard
             step={1}
             title="Choose amount & expiry"
@@ -271,7 +289,7 @@ export default function PlayPage() {
             <StrategyList
               isLoading={isLoading}
               data={strategies}
-              asset={activeAsset ?? "BTC"}
+              asset={activeAsset}
               stakeDusdc={validStake}
               onBet={handleBet}
               isBetting={isPending}
