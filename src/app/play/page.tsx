@@ -175,7 +175,7 @@ export default function PlayPage() {
           </div>
         )}
 
-        {/* Step: choose amount + expiry */}
+        {/* Step: choose amount + expiry (with inline top-up) */}
         {hasBalance && (
           <StepCard
             step={1}
@@ -191,32 +191,35 @@ export default function PlayPage() {
               onAmountChange={setAmount}
               onSelectMarket={setSelectedOracleId}
             />
+
+            {/* Top-up: deposit more, inline within the controls card */}
+            <div className="mt-4 border-t border-zinc-800 pt-4">
+              {showDeposit ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-zinc-300">Add DUSDC</span>
+                    <button
+                      onClick={() => setShowDeposit(false)}
+                      className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="w-full max-w-md">
+                    <DepositForm />
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowDeposit(true)}
+                  className="flex items-center gap-1.5 text-sm font-medium text-blue-400 transition-colors hover:text-blue-300"
+                >
+                  <span className="text-base leading-none">＋</span> Add DUSDC
+                </button>
+              )}
+            </div>
           </StepCard>
         )}
-
-        {/* Top-up: always available so the user can deposit more anytime */}
-        {hasBalance &&
-          (showDeposit ? (
-            <section className="card-surface animate-rise mx-auto w-full max-w-xl rounded-2xl border border-zinc-800 p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-zinc-200">Add DUSDC</h2>
-                <button
-                  onClick={() => setShowDeposit(false)}
-                  className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
-                >
-                  Close
-                </button>
-              </div>
-              <DepositForm />
-            </section>
-          ) : (
-            <button
-              onClick={() => setShowDeposit(true)}
-              className="mx-auto flex w-fit items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 px-6 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200"
-            >
-              ＋ Add DUSDC
-            </button>
-          ))}
 
         {/* Step 2: strategies — auto-loaded for the selected market, scaled live by amount */}
         {hasBalance && activeOracleId && (
