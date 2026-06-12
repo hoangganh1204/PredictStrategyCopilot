@@ -136,7 +136,7 @@ export default function VaultPage() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 px-4 py-6">
+      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-6 py-6">
         {/* Title + on/off control */}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
@@ -182,13 +182,7 @@ export default function VaultPage() {
 
         {state && (
           <>
-            {/* Custody disclaimer — be honest about the trust model */}
-            <div className="rounded-xl border border-amber-900/40 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-200/80">
-              Custodial demo: a keeper bot signs the vault&apos;s transactions. Trustless delegation
-              isn&apos;t supported by the protocol yet (mint is owner-gated).
-            </div>
-
-            {/* Stats */}
+            {/* Stats — full-width bar */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Stat label="Vault balance" value={balanceRaw !== null ? formatDusdcNumber(balanceRaw) : "—"} />
               <Stat
@@ -203,31 +197,40 @@ export default function VaultPage() {
               />
             </div>
 
-            {/* Current round / paused */}
-            {state.openRound ? (
-              <OpenRoundCard round={state.openRound} />
-            ) : (
-              <section className="card-surface rounded-2xl border border-zinc-800 p-5 text-sm text-zinc-400">
-                {state.pausedReason
-                  ? `⏸ Paused — ${state.pausedReason}`
-                  : online
-                  ? "Between rounds — the keeper is picking the next market…"
-                  : "No open round."}
-              </section>
-            )}
+            {/* Current round (left) + history (right) */}
+            <div className="grid gap-5 lg:grid-cols-3">
+              <div className="flex flex-col gap-4 lg:col-span-1 lg:sticky lg:top-20 lg:self-start">
+                {state.openRound ? (
+                  <OpenRoundCard round={state.openRound} />
+                ) : (
+                  <section className="card-surface rounded-2xl border border-zinc-800 p-5 text-sm text-zinc-400">
+                    {state.pausedReason
+                      ? `⏸ Paused — ${state.pausedReason}`
+                      : online
+                      ? "Between rounds — the keeper is picking the next market…"
+                      : "No open round."}
+                  </section>
+                )}
 
-            {/* History */}
-            <div className="flex flex-col gap-2">
-              <h2 className="px-1 text-sm font-semibold text-zinc-200">
-                Round history{history.length > 0 && ` (${history.length})`}
-              </h2>
-              {history.length === 0 ? (
-                <p className="rounded-xl border border-zinc-800/70 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-500">
-                  No settled rounds yet — the first one completes when the current market expires.
-                </p>
-              ) : (
-                history.map((r, i) => <HistoryRow key={`${r.oracleId}-${r.settledAt}-${i}`} r={r} now={now} />)
-              )}
+                {/* Custody disclaimer — be honest about the trust model */}
+                <div className="rounded-xl border border-amber-900/40 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-200/80">
+                  Custodial demo: a keeper bot signs the vault&apos;s transactions. Trustless
+                  delegation isn&apos;t supported by the protocol yet (mint is owner-gated).
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 lg:col-span-2">
+                <h2 className="px-1 text-sm font-semibold text-zinc-200">
+                  Round history{history.length > 0 && ` (${history.length})`}
+                </h2>
+                {history.length === 0 ? (
+                  <p className="rounded-xl border border-zinc-800/70 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-500">
+                    No settled rounds yet — the first one completes when the current market expires.
+                  </p>
+                ) : (
+                  history.map((r, i) => <HistoryRow key={`${r.oracleId}-${r.settledAt}-${i}`} r={r} now={now} />)
+                )}
+              </div>
             </div>
           </>
         )}

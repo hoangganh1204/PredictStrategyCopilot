@@ -179,104 +179,108 @@ export default function PlayPage() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 py-6">
-        {/* Title */}
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold tracking-tight text-zinc-100">
-            Predict {activeAsset} price
-          </h1>
-          <p className="text-sm text-zinc-500">
-            Pick an amount, review the suggestions, and bet with a single signature.
-          </p>
-        </div>
-
-        {/* Asset selector — dropdown; assets without open markets are chart-only */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-zinc-500">Asset</span>
-          <AssetSelect
-            assets={allAssets}
-            value={activeAsset}
-            liveAssets={assetsWithMarkets}
-            onChange={(a) => {
-              setSelectedAsset(a);
-              setSelectedOracleId(null);
-            }}
-          />
-        </div>
-
-        {/* Price chart for the selected asset (works for any asset) */}
-        <PriceChart asset={activeAsset} />
-
-        {/* Step 1: deposit (only when game balance is zero) */}
-        {!hasBalance && (
-          <div className="mx-auto w-full max-w-xl">
-            <StepCard step={1} title="Deposit DUSDC into game account">
-              <p className="mb-4 text-sm text-zinc-400">
-                Your funds live in an on-chain account. Deposit once to start betting.
-              </p>
-              <DepositForm />
-            </StepCard>
-          </div>
-        )}
-
-        {/* No betting markets for this asset yet — chart-only */}
-        {hasBalance && !activeHasMarkets && !marketsLoading && (
-          <div className="card-surface rounded-2xl border border-zinc-800 p-6 text-center">
-            <p className="font-medium text-zinc-300">No open markets for {activeAsset} yet</p>
-            <p className="mx-auto mt-1 max-w-md text-sm text-zinc-500">
-              You can still watch the chart above. Betting opens when {activeAsset} markets are
-              listed — pick an asset with a green dot (e.g. BTC) to place a bet now.
+      <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-6 py-6">
+        {/* Title + asset selector */}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
+              Predict {activeAsset} price
+            </h1>
+            <p className="text-sm text-zinc-500">
+              Pick an amount, review the suggestions, and bet with a single signature.
             </p>
           </div>
-        )}
-
-        {/* Step: choose amount + expiry (with inline top-up) */}
-        {hasBalance && activeHasMarkets && (
-          <StepCard
-            step={1}
-            title="Choose amount & expiry"
-            hint={`${maxBalance.toFixed(2)} DUSDC left`}
-          >
-            <AmountInput
-              amount={amount}
-              maxBalance={maxBalance}
-              markets={assetMarkets}
-              marketsLoading={marketsLoading}
-              selectedOracleId={activeOracleId}
-              onAmountChange={setAmount}
-              onSelectMarket={setSelectedOracleId}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-zinc-500">Asset</span>
+            <AssetSelect
+              assets={allAssets}
+              value={activeAsset}
+              liveAssets={assetsWithMarkets}
+              onChange={(a) => {
+                setSelectedAsset(a);
+                setSelectedOracleId(null);
+              }}
             />
+          </div>
+        </div>
 
-            {/* Top-up: deposit more, inline within the controls card */}
-            <div className="mt-4 border-t border-zinc-800 pt-4">
-              {showDeposit ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-zinc-300">Add DUSDC</span>
-                    <button
-                      onClick={() => setShowDeposit(false)}
-                      className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <div className="w-full max-w-md">
-                    <DepositForm />
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowDeposit(true)}
-                  className="flex items-center gap-1.5 text-sm font-medium text-blue-400 transition-colors hover:text-blue-300"
+        {/* Top zone: chart (left, wide) + controls/deposit panel (right, sticky) */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="flex flex-col gap-4 lg:col-span-2">
+            <PriceChart asset={activeAsset} />
+
+            {/* No betting markets for this asset yet — chart-only */}
+            {hasBalance && !activeHasMarkets && !marketsLoading && (
+              <div className="card-surface rounded-2xl border border-zinc-800 p-6 text-center">
+                <p className="font-medium text-zinc-300">No open markets for {activeAsset} yet</p>
+                <p className="mx-auto mt-1 max-w-md text-sm text-zinc-500">
+                  You can still watch the chart. Betting opens when {activeAsset} markets are
+                  listed — pick an asset with a green dot (e.g. BTC) to place a bet now.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-20">
+              {/* Deposit (game balance is zero) */}
+              {!hasBalance && (
+                <StepCard step={1} title="Deposit DUSDC into game account">
+                  <p className="mb-4 text-sm text-zinc-400">
+                    Your funds live in an on-chain account. Deposit once to start betting.
+                  </p>
+                  <DepositForm />
+                </StepCard>
+              )}
+
+              {/* Choose amount + expiry (with inline top-up) */}
+              {hasBalance && activeHasMarkets && (
+                <StepCard
+                  step={1}
+                  title="Choose amount & expiry"
+                  hint={`${maxBalance.toFixed(2)} DUSDC left`}
                 >
-                  <span className="text-base leading-none">＋</span> Add DUSDC
-                </button>
+                  <AmountInput
+                    amount={amount}
+                    maxBalance={maxBalance}
+                    markets={assetMarkets}
+                    marketsLoading={marketsLoading}
+                    selectedOracleId={activeOracleId}
+                    onAmountChange={setAmount}
+                    onSelectMarket={setSelectedOracleId}
+                  />
+
+                  {/* Top-up: deposit more, inline within the controls card */}
+                  <div className="mt-4 border-t border-zinc-800 pt-4">
+                    {showDeposit ? (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-zinc-300">Add DUSDC</span>
+                          <button
+                            onClick={() => setShowDeposit(false)}
+                            className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+                          >
+                            Close
+                          </button>
+                        </div>
+                        <DepositForm />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowDeposit(true)}
+                        className="flex items-center gap-1.5 text-sm font-medium text-blue-400 transition-colors hover:text-blue-300"
+                      >
+                        <span className="text-base leading-none">＋</span> Add DUSDC
+                      </button>
+                    )}
+                  </div>
+                </StepCard>
               )}
             </div>
-          </StepCard>
-        )}
+          </div>
+        </div>
 
-        {/* Step 2: strategies — auto-loaded for the selected market, scaled live by amount */}
+        {/* Strategies — full width below, auto-loaded, scaled live by amount */}
         {hasBalance && activeOracleId && (
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2.5 px-1">
@@ -285,7 +289,7 @@ export default function PlayPage() {
               </span>
               <h2 className="text-sm font-semibold text-zinc-200">Pick a strategy & bet</h2>
               {validStake <= 0 && (
-                <span className="ml-auto text-xs text-zinc-500">Enter an amount above</span>
+                <span className="ml-auto text-xs text-zinc-500">Enter an amount in the panel</span>
               )}
             </div>
             <StrategyList

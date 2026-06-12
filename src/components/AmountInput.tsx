@@ -41,9 +41,9 @@ export function AmountInput({
   }
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-8">
+    <div className="flex flex-col gap-4">
       {/* Amount */}
-      <div className="flex flex-col gap-2 lg:w-80 lg:shrink-0">
+      <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-zinc-300">Amount to spend</label>
           <span className="text-xs text-zinc-500">
@@ -90,7 +90,7 @@ export function AmountInput({
       </div>
 
       {/* Market (real expiries) */}
-      <div className="flex flex-col gap-2 lg:flex-1">
+      <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-zinc-300">Expiry (open markets)</label>
         {marketsLoading ? (
           <div className="h-10 animate-pulse rounded-xl bg-zinc-800" />
