@@ -5,24 +5,20 @@ import type { StrategyType } from "./types.js";
 
 export type Outcome = "won" | "lost" | "open";
 
+const OPEN_STATUSES = new Set(["active", "awaiting_settlement", "pending"]);
+
 /**
- * Map a Public Server position status to a settled outcome.
- * Real testnet vocabulary: "active", "redeemable" (won, unclaimed), "lost",
- * "redeemed" (won, claimed). We also tolerate the normalized spellings.
+ * Outcome of a position. While its market is unresolved it's "open"; once the
+ * position is closed, the outcome follows the REALIZED P&L sign.
+ *
+ * Status alone is NOT reliable: the server marks both wins and losses as
+ * "redeemed" (a lost binary has payout 0 but cost > 0 → negative realized_pnl).
+ * Verified on testnet: ~55% of "redeemed" positions are actually losses. So we
+ * decide win/loss from realized_pnl, not the status string.
  */
-export function classifyOutcome(status: string): Outcome {
-  switch (status) {
-    case "redeemable":
-    case "redeemed":
-    case "settled_won":
-      return "won";
-    case "lost":
-    case "settled_lost":
-      return "lost";
-    default:
-      // active / awaiting_settlement / pending / anything else
-      return "open";
-  }
+export function classifyOutcome(p: { status: string; realized_pnl?: number }): Outcome {
+  if (OPEN_STATUSES.has(p.status)) return "open";
+  return (p.realized_pnl ?? 0) >= 0 ? "won" : "lost";
 }
 
 /** Infer the strategy type from a position's strike/range/direction fields. */

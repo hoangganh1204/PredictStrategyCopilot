@@ -28,13 +28,13 @@ export function aggregateLeaderStats(
   address: string,
   positions: PositionSummaryItem[]
 ): LeaderStats {
-  const settled = positions.filter((p) => classifyOutcome(p.status) !== "open");
+  const settled = positions.filter((p) => classifyOutcome(p) !== "open");
 
   let netPnl_raw = 0;
   let wins = 0;
   for (const p of settled) {
     netPnl_raw += p.realized_pnl ?? 0;
-    if (classifyOutcome(p.status) === "won") wins += 1;
+    if (classifyOutcome(p) === "won") wins += 1;
   }
 
   const settledCount = settled.length;

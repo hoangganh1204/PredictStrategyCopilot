@@ -50,9 +50,15 @@ export interface RecentTrade {
   settledAt?: number;
 }
 
-/** Per-investor detail: recent trades + breakdown by strategy. */
+/** Per-investor detail: aggregate stats + recent trades + breakdown by strategy. */
 export interface InvestorDetail {
   address: string;
+  /** Number of settled (closed) positions the indexer returned. */
+  settledCount: number;
+  /** Wins / settled, in [0,1] (0 when none settled). */
+  winRate: number;
+  /** Net realized P&L across settled positions, raw DUSDC (scale 1e6). */
+  netPnl_raw: number;
   recentTrades: RecentTrade[];
   strategyBreakdown: StrategyBreakdown[];
 }

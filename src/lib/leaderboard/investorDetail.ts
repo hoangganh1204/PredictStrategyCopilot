@@ -23,7 +23,7 @@ function byRecency(a: PositionSummaryItem, b: PositionSummaryItem): number {
 export function getStrategyBreakdown(positions: PositionSummaryItem[]): StrategyBreakdown[] {
   const byType = new Map<StrategyType, StrategyBreakdown>();
   for (const p of positions) {
-    if (classifyOutcome(p.status) === "open") continue;
+    if (classifyOutcome(p) === "open") continue;
     const type = inferStrategyType(p);
     const entry = byType.get(type) ?? { type, count: 0, netPnl_raw: 0 };
     entry.count += 1;
@@ -39,7 +39,7 @@ export function getRecentTrades(
   limit = DEFAULT_RECENT_LIMIT
 ): RecentTrade[] {
   return positions
-    .filter((p) => classifyOutcome(p.status) !== "open")
+    .filter((p) => classifyOutcome(p) !== "open")
     .sort(byRecency)
     .slice(0, limit)
     .map((p) => {
@@ -48,21 +48,26 @@ export function getRecentTrades(
       return {
         type,
         label: STRATEGY_LABELS[type],
-        outcome: classifyOutcome(p.status) === "won" ? "won" : "lost",
+        outcome: classifyOutcome(p) === "won" ? "won" : "lost",
         pnl_raw: p.realized_pnl ?? 0,
         settledAt: ts || undefined,
       };
     });
 }
 
-/** Assemble the full investor detail payload. */
+/** Assemble the full investor detail payload, incl. aggregate stats. */
 export function buildInvestorDetail(
   address: string,
   positions: PositionSummaryItem[],
   recentLimit = DEFAULT_RECENT_LIMIT
 ): InvestorDetail {
+  const settled = positions.filter((p) => classifyOutcome(p) !== "open");
+  const wins = settled.filter((p) => classifyOutcome(p) === "won").length;
   return {
     address,
+    settledCount: settled.length,
+    winRate: settled.length > 0 ? wins / settled.length : 0,
+    netPnl_raw: settled.reduce((s, p) => s + (p.realized_pnl ?? 0), 0),
     recentTrades: getRecentTrades(positions, recentLimit),
     strategyBreakdown: getStrategyBreakdown(positions),
   };

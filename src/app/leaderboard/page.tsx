@@ -15,7 +15,7 @@ export default function LeaderboardPage() {
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-bold tracking-tight text-zinc-100">Leaderboard</h1>
           <p className="text-sm text-zinc-500">
-            Top players by winnings claimed on-chain. Tap a row to see how they trade.
+            Top players by net P&amp;L from real on-chain bets. Tap a row to see how they trade.
           </p>
         </div>
 

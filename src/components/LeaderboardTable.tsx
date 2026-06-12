@@ -26,6 +26,14 @@ function signed(raw: number): string {
   return `${raw > 0 ? "+" : ""}${formatDusdcNumber(raw)}`;
 }
 
+function pnlClass(raw: number): string {
+  return raw > 0 ? "text-emerald-400" : raw < 0 ? "text-red-400" : "text-zinc-400";
+}
+
+function winPct(rate: number): number {
+  return Math.round(rate * 100);
+}
+
 function StrategyChips({ types, className = "" }: { types: StrategyType[]; className?: string }) {
   if (types.length === 0) return <span className="text-xs text-zinc-600">—</span>;
   return (
@@ -56,17 +64,20 @@ function PodiumCard({ leader }: { leader: RankedLeader }) {
     >
       <div className={`text-3xl leading-none ${isFirst ? "sm:text-4xl" : ""}`}>{medal.emoji}</div>
       <div className="font-mono text-sm text-zinc-100">{truncateAddress(leader.address)}</div>
-      <div className={`font-mono text-xl font-bold ${medal.text} ${isFirst ? "sm:text-2xl" : ""}`}>
+      <div className={`font-mono text-xl font-bold ${leader.netPnl_raw < 0 ? "text-red-400" : medal.text} ${isFirst ? "sm:text-2xl" : ""}`}>
         {signed(leader.netPnl_raw)}
       </div>
-      <div className="text-[11px] uppercase tracking-wide text-zinc-500">DUSDC won · {leader.settledCount} wins</div>
+      <div className="text-[11px] uppercase tracking-wide text-zinc-500">
+        net P&amp;L · {winPct(leader.winRate)}% win · {leader.settledCount} bets
+      </div>
       <StrategyChips types={leader.recentStrategyTypes} className="mt-0.5" />
     </Link>
   );
 }
 
 function LeaderRow({ leader, max }: { leader: RankedLeader; max: number }) {
-  const pct = max > 0 ? Math.max(4, Math.round((leader.netPnl_raw / max) * 100)) : 0;
+  // Bar tracks net P&L magnitude vs the top leader; negative nets show empty.
+  const pct = max > 0 ? Math.min(100, Math.max(0, Math.round((leader.netPnl_raw / max) * 100))) : 0;
   return (
     <Link
       href={`/leaderboard/${leader.address}`}
@@ -92,8 +103,8 @@ function LeaderRow({ leader, max }: { leader: RankedLeader; max: number }) {
       </div>
 
       <div className="ml-auto w-28 text-right sm:ml-0 sm:w-32">
-        <div className="font-mono text-sm font-semibold text-emerald-400">{signed(leader.netPnl_raw)}</div>
-        <div className="text-xs text-zinc-600">{leader.settledCount} wins shown</div>
+        <div className={`font-mono text-sm font-semibold ${pnlClass(leader.netPnl_raw)}`}>{signed(leader.netPnl_raw)}</div>
+        <div className="text-xs text-zinc-600">{winPct(leader.winRate)}% win · {leader.settledCount} bets</div>
       </div>
 
       <svg className="hidden h-4 w-4 shrink-0 text-zinc-600 transition-colors group-hover:text-zinc-400 sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -211,8 +222,8 @@ export function LeaderboardTable({ isLoading, isError, data }: LeaderboardTableP
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>
-              Ranked by winnings claimed on-chain. The data source only publishes claimed (won) bets, so this is a
-              wins-claimed board — not a full win/loss record or lifetime P&amp;L.
+              Win rate and net P&amp;L are computed live from each player&apos;s real on-chain bets that the indexer
+              returns (recent activity) — they may not span a player&apos;s entire history.
             </span>
           </div>
         </>

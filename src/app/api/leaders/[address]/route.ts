@@ -24,7 +24,7 @@ export async function GET(
     }
 
     const positions = await fetchManagerPositions(managerId);
-    const hasSettled = positions.some((p) => classifyOutcome(p.status) !== "open");
+    const hasSettled = positions.some((p) => classifyOutcome(p) !== "open");
     if (!hasSettled) {
       return NextResponse.json(
         { ok: false, code: "ERR_NO_ACTIVITY", message: "This address has no settled bets yet." },
