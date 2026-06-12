@@ -10,6 +10,7 @@
     "probe": "tsx scripts/probe.ts",
     "e2e": "tsx scripts/e2e-execute.ts",
     "e2e:redeem": "tsx scripts/e2e-redeem.ts",
+    "e2e:copy": "tsx --env-file=.env.local scripts/e2e-copytrade.ts",
     "keeper": "tsx scripts/keeper.ts"
   },
   "dependencies": {
