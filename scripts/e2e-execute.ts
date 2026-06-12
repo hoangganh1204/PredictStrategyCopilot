@@ -63,7 +63,7 @@ async function getOrCreateManager(): Promise<string> {
   console.log("Step 1: Finding PredictManager...");
 
   // PredictManager is a SHARED object — discover via creation event, not owned objects.
-  const existing = await findManagerId(client, walletAddress);
+  const existing = await findManagerId(walletAddress);
   if (existing) {
     console.log(`  Found: ${existing}`);
     return existing;
@@ -82,7 +82,7 @@ async function getOrCreateManager(): Promise<string> {
 
   // Re-query events (indexer may lag a few seconds after the tx)
   for (let attempt = 0; attempt < 10; attempt++) {
-    const id = await findManagerId(client, walletAddress);
+    const id = await findManagerId(walletAddress);
     if (id) {
       console.log(`  Manager ID: ${id}`);
       return id;

@@ -65,7 +65,7 @@ async function signAndExecute(tx: Transaction): Promise<TxResult> {
 
 async function getManagerId(): Promise<string | null> {
   // PredictManager is a SHARED object — discover via creation event, not owned objects.
-  return findManagerId(client, walletAddress);
+  return findManagerId(walletAddress);
 }
 
 // ─── Place binary bet ─────────────────────────────────────────────────────────

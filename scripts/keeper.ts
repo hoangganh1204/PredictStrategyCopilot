@@ -122,7 +122,7 @@ async function signAndExecute(tx: Transaction): Promise<string> {
 }
 
 async function getOrCreateManager(): Promise<string> {
-  const existing = await findManagerId(client, keeperAddress);
+  const existing = await findManagerId(keeperAddress);
   if (existing) return existing;
   if (DRY_RUN) throw new Error("dry-run: keeper has no PredictManager yet (would create one)");
 
@@ -132,7 +132,7 @@ async function getOrCreateManager(): Promise<string> {
   await signAndExecute(tx);
   for (let i = 0; i < 10; i++) {
     await sleep(2000);
-    const id = await findManagerId(client, keeperAddress);
+    const id = await findManagerId(keeperAddress);
     if (id) return id;
   }
   throw new Error("manager created but not indexed yet");

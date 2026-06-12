@@ -1,7 +1,7 @@
 "use client";
-// PredictManager is a SHARED object — find via PredictManagerCreated events.
+// PredictManager is a SHARED object — find via the Public Server's owner index.
 import { useQuery } from "@tanstack/react-query";
-import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 import { DUSDC_SCALE } from "@/config/predict.js";
 import { fetchManagerSummary } from "@/lib/predict-client.js";
 import { findManagerId } from "@/lib/execute/findManager.js";
@@ -16,7 +16,6 @@ export const MANAGER_BALANCE_KEY = ["manager-balance"] as const;
 
 export function useManagerBalance() {
   const account = useCurrentAccount();
-  const suiClient = useSuiClient();
 
   return useQuery<ManagerBalance | null>({
     queryKey: [...MANAGER_BALANCE_KEY, account?.address],
@@ -29,7 +28,7 @@ export function useManagerBalance() {
       if (!account) return null;
 
       try {
-        const managerId = await findManagerId(suiClient, account.address);
+        const managerId = await findManagerId(account.address);
         if (!managerId) {
           return { managerId: null, balance_raw: 0n, balance_dusdc: 0 };
         }

@@ -1,32 +1,28 @@
 // PredictManager is a SHARED object — it cannot be found via getOwnedObjects.
-// Discover it by querying the PredictManagerCreated event emitted at creation.
-const MANAGER_CREATED_TYPE = "::predict_manager::PredictManagerCreated";
+// Discover it via the Public Server's owner-filtered manager index. (Querying
+// PredictManagerCreated from chain events is unreliable: for an active wallet
+// the creation event falls outside the recent-events window, so the manager
+// "disappears" and the UI wrongly prompts to create a new one.)
+import { PREDICT_CONFIG } from "@/config/predict.js";
 
-/** Minimal shape shared by dapp-kit SuiClient and SuiJsonRpcClient. */
-export interface EventQueryClient {
-  queryEvents(input: {
-    query: { Sender: string };
-    limit?: number;
-    order?: "ascending" | "descending";
-  }): Promise<{ data: Array<{ type?: string; parsedJson?: unknown }> }>;
+interface ManagerCreatedRecord {
+  manager_id: string;
+  owner: string;
+  checkpoint: number;
 }
 
 /**
- * Return the latest PredictManager ID created by `owner`, or null if none.
- * Uses the creation event because the manager is a shared object.
+ * Return the wallet's active PredictManager ID (its most recently created one),
+ * or null if it has none.
  */
-export async function findManagerId(
-  client: EventQueryClient,
-  owner: string
-): Promise<string | null> {
-  const events = await client.queryEvents({
-    query: { Sender: owner },
-    limit: 50,
-    order: "descending",
-  });
-  const managerEvent = events.data.find(
-    (e) => typeof e.type === "string" && e.type.includes(MANAGER_CREATED_TYPE)
-  );
-  const parsed = managerEvent?.parsedJson as { manager_id?: string } | undefined;
-  return parsed?.manager_id ?? null;
+export async function findManagerId(owner: string): Promise<string | null> {
+  const res = await fetch(`${PREDICT_CONFIG.SERVER_URL}/managers?owner=${owner}`);
+  if (!res.ok) return null;
+
+  const records = (await res.json()) as ManagerCreatedRecord[];
+  if (!Array.isArray(records) || records.length === 0) return null;
+
+  // Highest checkpoint = most recently created = the account in active use.
+  const latest = records.reduce((a, b) => (b.checkpoint > a.checkpoint ? b : a));
+  return latest.manager_id ?? null;
 }
