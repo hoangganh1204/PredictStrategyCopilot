@@ -4,66 +4,10 @@
 // as `pending`. Stops polling a leader as soon as they're unfollowed.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { DUSDC_SCALE } from "@/config/predict.js";
-import type { CopyParams, StrategyType } from "@/lib/copytrade/types.js";
+import { amountToDusdc, copyKey, fetchCopyResult, type CopyResult } from "@/lib/copytrade/copyResult.js";
 import { useFollowState } from "./useFollowState.js";
 
-export interface CopyResult {
-  copyable: boolean;
-  strategyType?: StrategyType;
-  copyParams?: CopyParams;
-  reason?: string;
-}
-
-interface SerializedCopyParams {
-  strategyType: StrategyType;
-  oracleId: string;
-  strike_raw?: string;
-  lowerStrike_raw?: string;
-  upperStrike_raw?: string;
-  isUp?: boolean;
-  quantity_raw: string;
-  cost_raw: string;
-  payout_raw: string;
-  expiryMs: number;
-}
-
-interface ApiResponse {
-  copyable: boolean;
-  strategyType?: StrategyType;
-  copyParams?: SerializedCopyParams;
-  reason?: string;
-}
-
-function parseCopyParams(p: SerializedCopyParams): CopyParams {
-  return {
-    strategyType: p.strategyType,
-    oracleId: p.oracleId,
-    strike_raw: p.strike_raw !== undefined ? BigInt(p.strike_raw) : undefined,
-    lowerStrike_raw: p.lowerStrike_raw !== undefined ? BigInt(p.lowerStrike_raw) : undefined,
-    upperStrike_raw: p.upperStrike_raw !== undefined ? BigInt(p.upperStrike_raw) : undefined,
-    isUp: p.isUp,
-    quantity_raw: BigInt(p.quantity_raw),
-    cost_raw: BigInt(p.cost_raw),
-    payout_raw: BigInt(p.payout_raw),
-    expiryMs: p.expiryMs,
-  };
-}
-
-function toResult(body: ApiResponse): CopyResult {
-  return {
-    copyable: !!body.copyable,
-    strategyType: body.strategyType,
-    copyParams: body.copyParams ? parseCopyParams(body.copyParams) : undefined,
-    reason: body.reason,
-  };
-}
-
-/** Stable identity for a copyable bet — so we only prompt once per position. */
-function copyKey(leader: string, p: CopyParams): string {
-  const lvl = p.strategyType === "range" ? `${p.lowerStrike_raw}-${p.upperStrike_raw}` : `${p.strike_raw}`;
-  return `${leader}|${p.oracleId}|${lvl}|${p.expiryMs}`;
-}
+export type { CopyResult };
 
 interface Pending {
   leaderAddress: string;
@@ -89,11 +33,8 @@ export function useCopyTrade(followerManagerId: string | null): UseCopyTradeRetu
       refetchInterval: 10_000,
       staleTime: 5_000,
       queryFn: async (): Promise<{ leaderAddress: string; result: CopyResult }> => {
-        const amount = Number(f.followerAmount_raw) / Number(DUSDC_SCALE);
-        const url = `/api/leaders/${f.leaderAddress}/latest-position?followerAmount=${amount}&followerManager=${followerManagerId}`;
-        const res = await fetch(url);
-        const body = (await res.json()) as ApiResponse;
-        return { leaderAddress: f.leaderAddress, result: toResult(body) };
+        const result = await fetchCopyResult(f.leaderAddress, followerManagerId!, amountToDusdc(f.followerAmount_raw));
+        return { leaderAddress: f.leaderAddress, result };
       },
     })),
   });

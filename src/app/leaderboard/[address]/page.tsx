@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader.js";
 import { InvestorDetailView } from "@/components/InvestorDetail.js";
 import { FollowButton } from "@/components/FollowButton.js";
+import { CopyStatusPanel } from "@/components/CopyStatusPanel.js";
 import { useInvestorDetail } from "@/hooks/useInvestorDetail.js";
 import { truncateAddress } from "@/lib/leaderboard/computeLeaderboard.js";
 
@@ -36,6 +37,9 @@ export default function InvestorPage() {
           <BackLink />
           {data?.detail && <FollowButton leaderAddress={address} />}
         </div>
+
+        {/* Live copy status — visible feedback once you're following. */}
+        {address && <CopyStatusPanel leaderAddress={address} />}
 
         {isLoading && (
           <div className="flex flex-col gap-3">

@@ -15,7 +15,7 @@ import { truncateAddress } from "@/lib/leaderboard/computeLeaderboard.js";
 import { STRATEGY_LABELS } from "@/lib/leaderboard/investorDetail.js";
 import { formatDusdcNumber, formatCountdown } from "@/lib/format.js";
 import { TxStatusOverlay } from "@/components/TxStatusOverlay.js";
-import type { CopyResult } from "@/hooks/useCopyTrade.js";
+import type { CopyResult } from "@/lib/copytrade/copyResult.js";
 
 interface CopyTradeModalProps {
   leaderAddress: string;
