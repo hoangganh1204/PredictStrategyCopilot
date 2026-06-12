@@ -413,38 +413,38 @@
 
 ### Tests First (TDD — Red Phase)
 
-- [ ] T076 [P] [US7] Write `tests/unit/copytrade/scaleCopyParams.test.ts`: test `scaleCopyParams()` — preserves strategyType from leader, scales quantity_raw by follower amount (not leader amount), binary: isUp + strike match leader, range: lowerStrike + upperStrike match leader exactly.
+- [X] T076 [P] [US7] Write `tests/unit/copytrade/scaleCopyParams.test.ts`: test `scaleCopyParams()` — preserves strategyType from leader, scales quantity_raw by follower amount (not leader amount), binary: isUp + strike match leader, range: lowerStrike + upperStrike match leader exactly.
   - **Verify**: Tests exist and FAIL.
 
-- [ ] T077 [P] [US7] Write `tests/unit/copytrade/validateCopyEligibility.test.ts`: test `validateCopyEligibility()` — returns { eligible: false, reason } for: oracle not active, SVI > 30s stale (boundary: exactly 30_000ms → blocked), balance < cost. Returns { eligible: true } when all 3 pass. Reason strings are non-empty Vietnamese.
+- [X] T077 [P] [US7] Write `tests/unit/copytrade/validateCopyEligibility.test.ts`: test `validateCopyEligibility()` — returns { eligible: false, reason } for: oracle not active, SVI > 30s stale (boundary: exactly 30_000ms → blocked), balance < cost. Returns { eligible: true } when all 3 pass. Reason strings are non-empty Vietnamese.
   - **Verify**: Tests exist and FAIL.
 
-- [ ] T078 [P] [US7] Write `tests/unit/copytrade/buildCopyMintTx.test.ts`: test `buildCopyMintTx()` — returns `Transaction` object (not signed digest), binary calls `predict::mint`, range calls `predict::mint_range`. **Assert function signature has NO signer/wallet parameter.**
+- [X] T078 [P] [US7] Write `tests/unit/copytrade/buildCopyMintTx.test.ts`: test `buildCopyMintTx()` — returns `Transaction` object (not signed digest), binary calls `predict::mint`, range calls `predict::mint_range`. **Assert function signature has NO signer/wallet parameter.**
   - **Verify**: Tests exist and FAIL.
 
 ### Implementation (TDD — Green Phase)
 
-- [ ] T079 [US7] Define copy-trade types in `src/lib/copytrade/types.ts`: `CopyParams` (strategyType, oracleId, strike_raw/lowerStrike_raw/upperStrike_raw, isUp?, quantity_raw, cost_raw, payout_raw, expiryMs), `CopyEligibility` ({ eligible: boolean, reason?: string }), `FollowConfig` (leaderAddress, followerAmount_raw).
+- [X] T079 [US7] Define copy-trade types in `src/lib/copytrade/types.ts`: `CopyParams` (strategyType, oracleId, strike_raw/lowerStrike_raw/upperStrike_raw, isUp?, quantity_raw, cost_raw, payout_raw, expiryMs), `CopyEligibility` ({ eligible: boolean, reason?: string }), `FollowConfig` (leaderAddress, followerAmount_raw).
   - **Verify**: `tsc --noEmit` passes.
 
-- [ ] T080 [US7] Implement `src/lib/copytrade/scaleCopyParams.ts`: `scaleCopyParams(leaderPosition: PositionSummaryItem, followerAmount_raw: bigint, pricingFn: PricingFn): Promise<CopyParams>`. Infer strategyType from leader position fields. Keep leader's strike/range. Compute follower quantity via pricingFn (reuse devInspect pattern from T024b). Return CopyParams with cost_raw + payout_raw.
+- [X] T080 [US7] Implement `src/lib/copytrade/scaleCopyParams.ts`: `scaleCopyParams(leaderPosition: PositionSummaryItem, followerAmount_raw: bigint, pricingFn: PricingFn): Promise<CopyParams>`. Infer strategyType from leader position fields. Keep leader's strike/range. Compute follower quantity via pricingFn (reuse devInspect pattern from T024b). Return CopyParams with cost_raw + payout_raw.
   - **Verify**: `pnpm vitest run tests/unit/copytrade/scaleCopyParams.test.ts` — all GREEN.
   - **Depends on**: T079
 
-- [ ] T081 [US7] Implement `src/lib/copytrade/validateCopyEligibility.ts`: `validateCopyEligibility(oracleState, sviTimestamp, followerBalance_raw, estimatedCost_raw): CopyEligibility`. Check 3 conditions: (a) oracle.status === "active", (b) Date.now() - sviTimestamp ≤ 30_000, (c) followerBalance_raw ≥ estimatedCost_raw. Return { eligible: false, reason } with plain Vietnamese reason on first failure.
+- [X] T081 [US7] Implement `src/lib/copytrade/validateCopyEligibility.ts`: `validateCopyEligibility(oracleState, sviTimestamp, followerBalance_raw, estimatedCost_raw): CopyEligibility`. Check 3 conditions: (a) oracle.status === "active", (b) Date.now() - sviTimestamp ≤ 30_000, (c) followerBalance_raw ≥ estimatedCost_raw. Return { eligible: false, reason } with plain Vietnamese reason on first failure.
   - **Verify**: `pnpm vitest run tests/unit/copytrade/validateCopyEligibility.test.ts` — all GREEN.
 
-- [ ] T082 [US7] Implement `src/lib/copytrade/buildCopyMintTx.ts`: `buildCopyMintTx(params: CopyParams, managerId: string): Transaction`. Build PTB using existing `buildMintTx` (T030a) for binary or range. **CRITICAL: function MUST NOT import from `@mysten/dapp-kit` or any wallet/signer module. Returns unsigned Transaction only.**
+- [X] T082 [US7] Implement `src/lib/copytrade/buildCopyMintTx.ts`: `buildCopyMintTx(params: CopyParams, managerId: string): Transaction`. Build PTB using existing `buildMintTx` (T030a) for binary or range. **CRITICAL: function MUST NOT import from `@mysten/dapp-kit` or any wallet/signer module. Returns unsigned Transaction only.**
   - **Verify**: `pnpm vitest run tests/unit/copytrade/buildCopyMintTx.test.ts` — all GREEN.
   - **Depends on**: T030a (buildMintTx), T079
 
 ### API Route + Integration
 
-- [ ] T083 [US7] Implement `src/app/api/leaders/[address]/latest-position/route.ts`: `GET /api/leaders/:address/latest-position?followerAmount=X&followerManager=Y`. Fetch leader's latest active/recently-minted position. Run `validateCopyEligibility`. If eligible → `scaleCopyParams` → return `{ copyable: true, strategyType, copyParams }`. If not → return `{ copyable: false, reason }` (HTTP 200, not 400).
+- [X] T083 [US7] Implement `src/app/api/leaders/[address]/latest-position/route.ts`: `GET /api/leaders/:address/latest-position?followerAmount=X&followerManager=Y`. Fetch leader's latest active/recently-minted position. Run `validateCopyEligibility`. If eligible → `scaleCopyParams` → return `{ copyable: true, strategyType, copyParams }`. If not → return `{ copyable: false, reason }` (HTTP 200, not 400).
   - **Verify**: `curl localhost:3000/api/leaders/0x.../latest-position?followerAmount=10&followerManager=0x...` returns copyable response.
   - **Depends on**: T080, T081
 
-- [ ] T084 [US7] Write `tests/integration/api-copytrade.test.ts`: hit API Route with MSW. Assert: copyable=true returns valid copyParams with correct strategyType. Assert: market closed → copyable=false. Assert: stale SVI → copyable=false. Assert: insufficient balance → copyable=false. Assert: reason strings are non-empty.
+- [X] T084 [US7] Write `tests/integration/api-copytrade.test.ts`: hit API Route with MSW. Assert: copyable=true returns valid copyParams with correct strategyType. Assert: market closed → copyable=false. Assert: stale SVI → copyable=false. Assert: insufficient balance → copyable=false. Assert: reason strings are non-empty.
   - **Verify**: `pnpm vitest run tests/integration/api-copytrade.test.ts` — all GREEN.
 
 **Checkpoint**: Copy-trade engine complete. All three eligibility gates enforce. Strategy type preserved. No auto-signing. FR-018, FR-019, FR-020, SC-010, SC-011 satisfied.
