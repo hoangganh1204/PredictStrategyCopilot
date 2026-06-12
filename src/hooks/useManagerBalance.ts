@@ -21,9 +21,10 @@ export function useManagerBalance() {
     queryKey: [...MANAGER_BALANCE_KEY, account?.address],
     enabled: !!account,
     staleTime: 5_000,
-    // Poll every 3s until manager is found (handles indexer delay after create_manager)
+    // Poll 3s until the manager is found (indexer delay after create_manager),
+    // then 10s so the balance updates live as bets settle (incl. the auto-vault).
     refetchInterval: (query) =>
-      query.state.data?.managerId === null ? 3_000 : false,
+      query.state.data?.managerId === null ? 3_000 : 10_000,
     queryFn: async () => {
       if (!account) return null;
 
