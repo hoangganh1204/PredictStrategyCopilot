@@ -1,6 +1,7 @@
 "use client";
 // Auto-Vault dashboard: deposit once, the keeper rolls the strategy every cycle.
-// Read-only — works without a connected wallet (nice for judges/spectators).
+// Read-only data + a pause/resume control (nice for judges/spectators).
+import { useState } from "react";
 import { AppHeader } from "@/components/AppHeader.js";
 import { useVault } from "@/hooks/useVault.js";
 import { useCountdown, useNow } from "@/hooks/useCountdown.js";
@@ -115,8 +116,18 @@ function NotRunning() {
 }
 
 export default function VaultPage() {
-  const { state, balanceRaw, isLoading } = useVault();
+  const { state, paused, setPaused, balanceRaw, isLoading } = useVault();
   const now = useNow(5000);
+  const [toggling, setToggling] = useState(false);
+
+  async function togglePaused(next: boolean) {
+    setToggling(true);
+    try {
+      await setPaused(next);
+    } finally {
+      setToggling(false);
+    }
+  }
 
   const online = !!state && now !== null && now - state.updatedAt < 90_000;
   const pnl = state?.totals.pnl_raw ?? 0;
@@ -126,21 +137,44 @@ export default function VaultPage() {
     <>
       <AppHeader />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 px-4 py-6">
-        {/* Title */}
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight text-zinc-100">Auto-Vault</h1>
-            {state && (
-              <span className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/70 px-2.5 py-1 text-xs text-zinc-400">
-                <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-emerald-400" : "bg-zinc-600"}`} />
-                {online ? "Keeper online" : `Keeper offline · last seen ${now ? timeAgo(now, state.updatedAt) : "—"}`}
-              </span>
-            )}
+        {/* Title + on/off control */}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold tracking-tight text-zinc-100">Auto-Vault</h1>
+              {state && (
+                <span className="flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/70 px-2.5 py-1 text-xs text-zinc-400">
+                  <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-emerald-400" : "bg-zinc-600"}`} />
+                  {online ? "Keeper online" : `Keeper offline · last seen ${now ? timeAgo(now, state.updatedAt) : "—"}`}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-zinc-500">
+              Deposit once — the keeper redeems each settled round and re-enters the strategy automatically.
+            </p>
           </div>
-          <p className="text-sm text-zinc-500">
-            Deposit once — the keeper redeems each settled round and re-enters the strategy automatically.
-          </p>
+
+          {state && (
+            <button
+              onClick={() => togglePaused(!paused)}
+              disabled={toggling}
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all disabled:opacity-50 ${
+                paused
+                  ? "btn-primary text-white"
+                  : "border border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800/60"
+              }`}
+            >
+              {paused ? "▶ Resume auto-betting" : "⏸ Pause auto-betting"}
+            </button>
+          )}
         </div>
+
+        {/* Paused banner */}
+        {state && paused && (
+          <div className="rounded-xl border border-amber-900/40 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-200/90">
+            ⏸ Auto-betting is off. The keeper settles any open round but won&apos;t enter new ones until you resume.
+          </div>
+        )}
 
         {isLoading && <div className="h-24 animate-pulse rounded-2xl bg-zinc-900" />}
 

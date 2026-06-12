@@ -174,6 +174,17 @@ function saveState(state: VaultState) {
   fs.writeFileSync(STATE_PATH, JSON.stringify(state, null, 2));
 }
 
+// Control flag — written by the /vault page (POST /api/vault), read each cycle.
+// Lets a user pause/resume auto-betting without stopping the keeper process.
+const CONTROL_PATH = path.join(process.cwd(), ".vault-control.json");
+function isPausedByUser(): boolean {
+  try {
+    return JSON.parse(fs.readFileSync(CONTROL_PATH, "utf8")).paused === true;
+  } catch {
+    return false;
+  }
+}
+
 // ─── Round lifecycle ──────────────────────────────────────────────────────────
 
 /** Settle the open round if its oracle has settled. Returns true if closed. */
@@ -393,10 +404,22 @@ async function main() {
   saveState(state);
 
   let consecutiveErrors = 0;
+  let wasPaused = false;
   while (running) {
     try {
-      if (state.openRound) await settleOpenRound(state);
-      else await openNewRound(state);
+      // Always settle an open round (never strand funds), but only open new
+      // rounds when the user hasn't paused auto-betting from the dashboard.
+      if (state.openRound) {
+        await settleOpenRound(state);
+      } else if (isPausedByUser()) {
+        if (!wasPaused) log("auto-betting paused by user — settling only, no new rounds");
+        wasPaused = true;
+        state.pausedReason = "Auto-betting is off (paused from the dashboard)";
+      } else {
+        if (wasPaused) log("auto-betting resumed");
+        wasPaused = false;
+        await openNewRound(state);
+      }
       saveState(state);
       consecutiveErrors = 0;
     } catch (e) {

@@ -8,6 +8,7 @@ import type { VaultState } from "@/lib/vault/types.js";
 interface VaultApiResponse {
   ok: boolean;
   state: VaultState | null;
+  paused: boolean;
 }
 
 export function useVault() {
@@ -17,7 +18,17 @@ export function useVault() {
     queryFn: async () => (await fetch("/api/vault")).json(),
   });
   const state = stateQuery.data?.ok ? stateQuery.data.state : null;
+  const paused = stateQuery.data?.paused ?? false;
   const managerId = state?.managerId ?? null;
+
+  async function setPaused(next: boolean) {
+    await fetch("/api/vault", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paused: next }),
+    });
+    await stateQuery.refetch();
+  }
 
   const balanceQuery = useQuery<number>({
     queryKey: ["vault-balance", managerId],
@@ -31,6 +42,8 @@ export function useVault() {
 
   return {
     state,
+    paused,
+    setPaused,
     balanceRaw: balanceQuery.data ?? null,
     isLoading: stateQuery.isLoading,
   };

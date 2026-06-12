@@ -45,3 +45,4 @@ Thumbs.db
 
 # Auto-Vault keeper state (local runtime data)
 .vault.json
+.vault-control.json
