@@ -135,7 +135,19 @@ export interface PositionSummaryItem {
   unrealized_pnl: number;
   /** Realized P&L in raw DUSDC (scale: 1e6) */
   realized_pnl: number;
-  status: "active" | "awaiting_settlement" | "settled_won" | "settled_lost" | "redeemed";
+  /**
+   * Position status. The live server emits "active" | "redeemable" (won, unclaimed)
+   * | "lost" | "redeemed" (won, claimed); the normalized "settled_won"/"settled_lost"/
+   * "awaiting_settlement" spellings are tolerated by consumers as well.
+   */
+  status:
+    | "active"
+    | "redeemable"
+    | "lost"
+    | "redeemed"
+    | "awaiting_settlement"
+    | "settled_won"
+    | "settled_lost";
   [key: string]: unknown;
 }
 

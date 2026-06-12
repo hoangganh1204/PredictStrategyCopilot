@@ -325,45 +325,45 @@
 
 ### Probe & Types
 
-- [ ] T060 [US6] Probe: discover how to enumerate all managers with settled positions on testnet. Try `GET /predicts/:predict_id/managers` on Public Server. If unavailable, use `suix_queryEvents` filtering for `predict::MintEvent` → extract unique `manager_id` values. Document working approach in `scripts/probe-leaderboard.ts`.
+- [X] T060 [US6] Probe: discover how to enumerate all managers with settled positions on testnet. Try `GET /predicts/:predict_id/managers` on Public Server. If unavailable, use `suix_queryEvents` filtering for `predict::MintEvent` → extract unique `manager_id` values. Document working approach in `scripts/probe-leaderboard.ts`.
   - **Verify**: Script logs list of manager IDs with at least 1 settled position.
 
-- [ ] T061 [US6] Define leaderboard types in `src/lib/leaderboard/types.ts`: `LeaderStats` (address, netPnl_raw, winRate, settledCount, recentStrategyTypes), `RankedLeader` (LeaderStats + rank), `LeaderboardResult` ({ leaders: RankedLeader[], sparse: boolean, message?: string }), `InvestorDetail` (address, recentTrades, strategyBreakdown), `StrategyBreakdown` (type, count, netPnl_raw).
+- [X] T061 [US6] Define leaderboard types in `src/lib/leaderboard/types.ts`: `LeaderStats` (address, netPnl_raw, winRate, settledCount, recentStrategyTypes), `RankedLeader` (LeaderStats + rank), `LeaderboardResult` ({ leaders: RankedLeader[], sparse: boolean, message?: string }), `InvestorDetail` (address, recentTrades, strategyBreakdown), `StrategyBreakdown` (type, count, netPnl_raw).
   - **Verify**: `tsc --noEmit` passes.
 
-- [ ] T062 [US6] Extend `src/lib/predict-client.ts`: add `fetchAllManagerIds(predictId)` using approach from T060. Add `fetchManagerPositions(managerId)` alias if not already present (wraps existing `fetchPositionsSummary`).
+- [X] T062 [US6] Extend `src/lib/predict-client.ts`: add `fetchAllManagerIds(predictId)` using approach from T060. Add `fetchManagerPositions(managerId)` alias if not already present (wraps existing `fetchPositionsSummary`).
   - **Verify**: `tsc --noEmit` passes; function returns real manager IDs from testnet.
   - **Depends on**: T060
 
 ### Tests First (TDD — Red Phase)
 
-- [ ] T063 [P] [US6] Write `tests/unit/leaderboard/computeLeaderboard.test.ts`: test `aggregateLeaderStats()` — netPnl from settled only, winRate = won/(won+lost), settledCount excludes active. Test `rankLeaders()` — sorted by netPnl desc, sparse flag when < threshold. Test `truncateAddress()` — "0xABCD...1234" format. Use fixtures from `PositionSummaryItem` type (T008).
+- [X] T063 [P] [US6] Write `tests/unit/leaderboard/computeLeaderboard.test.ts`: test `aggregateLeaderStats()` — netPnl from settled only, winRate = won/(won+lost), settledCount excludes active. Test `rankLeaders()` — sorted by netPnl desc, sparse flag when < threshold. Test `truncateAddress()` — "0xABCD...1234" format. Use fixtures from `PositionSummaryItem` type (T008).
   - **Verify**: Tests exist and FAIL (functions not yet implemented).
 
-- [ ] T064 [P] [US6] Write `tests/unit/leaderboard/investorDetail.test.ts`: test `getStrategyBreakdown()` — groups positions by inferred StrategyType (from strike/lower_strike/is_up fields), returns count + netPnl per type. Test `getRecentTrades()` — returns last N trades with plain-language strategy labels.
+- [X] T064 [P] [US6] Write `tests/unit/leaderboard/investorDetail.test.ts`: test `getStrategyBreakdown()` — groups positions by inferred StrategyType (from strike/lower_strike/is_up fields), returns count + netPnl per type. Test `getRecentTrades()` — returns last N trades with plain-language strategy labels.
   - **Verify**: Tests exist and FAIL.
 
 ### Implementation (TDD — Green Phase)
 
-- [ ] T065 [US6] Implement `src/lib/leaderboard/computeLeaderboard.ts`: `aggregateLeaderStats(positions: PositionSummaryItem[]): LeaderStats` — only count settled_won/settled_lost/redeemed in metrics; return 0 winRate (not NaN) when no settled. `rankLeaders(allStats: LeaderStats[]): LeaderboardResult` — sort netPnl desc, tie-break winRate desc; set sparse=true when total settledCount < MIN_SETTLED_THRESHOLD. `truncateAddress(addr: string): string` — 6+"..."+4 chars.
+- [X] T065 [US6] Implement `src/lib/leaderboard/computeLeaderboard.ts`: `aggregateLeaderStats(positions: PositionSummaryItem[]): LeaderStats` — only count settled_won/settled_lost/redeemed in metrics; return 0 winRate (not NaN) when no settled. `rankLeaders(allStats: LeaderStats[]): LeaderboardResult` — sort netPnl desc, tie-break winRate desc; set sparse=true when total settledCount < MIN_SETTLED_THRESHOLD. `truncateAddress(addr: string): string` — 6+"..."+4 chars.
   - **Verify**: `pnpm vitest run tests/unit/leaderboard/computeLeaderboard.test.ts` — all GREEN.
 
-- [ ] T066 [US6] Implement `src/lib/leaderboard/investorDetail.ts`: `getStrategyBreakdown(positions)` — infer StrategyType from PositionSummaryItem fields (has lower_strike → range; has is_up=true → binary_up; is_up=false → binary_down). `getRecentTrades(positions, limit)` — return last N settled trades with strategy label in plain Vietnamese.
+- [X] T066 [US6] Implement `src/lib/leaderboard/investorDetail.ts`: `getStrategyBreakdown(positions)` — infer StrategyType from PositionSummaryItem fields (has lower_strike → range; has is_up=true → binary_up; is_up=false → binary_down). `getRecentTrades(positions, limit)` — return last N settled trades with strategy label in plain Vietnamese.
   - **Verify**: `pnpm vitest run tests/unit/leaderboard/investorDetail.test.ts` — all GREEN.
 
 ### API Routes
 
-- [ ] T067 [US6] Implement `src/app/api/leaderboard/route.ts`: `GET /api/leaderboard`. Fetch all manager IDs (T062) → parallel fetch positions for each → aggregate + rank → return `LeaderboardResult` JSON. Handle sparse case (FR-017). Cache-friendly: TanStack Query staleTime 30s on client.
+- [X] T067 [US6] Implement `src/app/api/leaderboard/route.ts`: `GET /api/leaderboard`. Fetch all manager IDs (T062) → parallel fetch positions for each → aggregate + rank → return `LeaderboardResult` JSON. Handle sparse case (FR-017). Cache-friendly: TanStack Query staleTime 30s on client.
   - **Verify**: `curl localhost:3000/api/leaderboard` returns ranked leaders from testnet data.
   - **Depends on**: T062, T065
 
-- [ ] T068 [US6] Implement `src/app/api/leaders/[address]/route.ts`: `GET /api/leaders/:address`. Find manager by owner address → fetch positions → return `InvestorDetail` JSON (recentTrades + strategyBreakdown). Return 404 `ERR_NO_ACTIVITY` if no settled positions.
+- [X] T068 [US6] Implement `src/app/api/leaders/[address]/route.ts`: `GET /api/leaders/:address`. Find manager by owner address → fetch positions → return `InvestorDetail` JSON (recentTrades + strategyBreakdown). Return 404 `ERR_NO_ACTIVITY` if no settled positions.
   - **Verify**: `curl localhost:3000/api/leaders/0x...` returns investor detail JSON.
   - **Depends on**: T066
 
 ### Integration Test
 
-- [ ] T069 [US6] Write `tests/integration/api-leaderboard.test.ts`: hit API Routes with MSW mocking Public Server. Assert: correct ranked order, sparse flag on empty data, 404 for unknown address, response shape matches `LeaderboardResult` / `InvestorDetail`.
+- [X] T069 [US6] Write `tests/integration/api-leaderboard.test.ts`: hit API Routes with MSW mocking Public Server. Assert: correct ranked order, sparse flag on empty data, 404 for unknown address, response shape matches `LeaderboardResult` / `InvestorDetail`.
   - **Verify**: `pnpm vitest run tests/integration/api-leaderboard.test.ts` — all GREEN.
 
 **Checkpoint**: Leaderboard engine complete. API routes serve ranked leaders from on-chain data. FR-014, FR-015, FR-016, FR-017, SC-007 satisfied.

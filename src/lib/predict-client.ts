@@ -80,3 +80,31 @@ export function fetchPositionsRaw(
 ): Promise<{ minted: MintedEventRecord[]; redeemed: unknown[] }> {
   return get(`/managers/${managerId}/positions`);
 }
+
+/** One PredictManager as indexed by the server's manager-created feed. */
+export interface ManagerRecord {
+  manager_id: string;
+  owner: string;
+  checkpoint: number;
+}
+
+/**
+ * Every PredictManager known to the server (leaderboard enumeration — T060).
+ * The dedicated `/predicts/:id/managers` endpoint is empty on testnet, so we use
+ * the unfiltered `/managers` index (one record per creation event) and de-dupe.
+ * `predictId` is accepted for API symmetry but the index is not predict-scoped.
+ */
+export async function fetchAllManagerIds(_predictId?: string): Promise<ManagerRecord[]> {
+  const records = await get<ManagerRecord[]>(`/managers`);
+  if (!Array.isArray(records)) return [];
+  const byId = new Map<string, ManagerRecord>();
+  for (const r of records) if (r?.manager_id) byId.set(r.manager_id, r);
+  return [...byId.values()];
+}
+
+/** Alias for fetchPositionsSummary — reads as the leaderboard's intent. */
+export function fetchManagerPositions(
+  managerId: string
+): Promise<PositionsSummaryResponse> {
+  return fetchPositionsSummary(managerId);
+}
