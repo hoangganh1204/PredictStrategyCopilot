@@ -459,26 +459,26 @@
 
 **Spec refs**: FR-018, FR-019, FR-020, FR-021, FR-022, FR-023, SC-009
 
-- [ ] T085 [P] [US7] Implement `src/hooks/useFollowState.ts`: manage follow state in localStorage. `followLeader(address, amount_raw)`, `unfollowLeader(address)`, `getFollowedLeaders(): FollowConfig[]`, `isFollowing(address): boolean`. Persists across page reloads.
+- [X] T085 [P] [US7] Implement `src/hooks/useFollowState.ts`: manage follow state in localStorage. `followLeader(address, amount_raw)`, `unfollowLeader(address)`, `getFollowedLeaders(): FollowConfig[]`, `isFollowing(address): boolean`. Persists across page reloads.
   - **Verify**: Follow/unfollow persists; `getFollowedLeaders()` returns correct list after reload.
 
-- [ ] T086 [P] [US7] Implement `src/hooks/useCopyTrade.ts`: TanStack Query hook. When following a leader → poll `GET /api/leaders/:address/latest-position` (interval 10s). When new copyable position detected → set `pendingCopy` state with CopyParams. Expose `clearPendingCopy()`. Stop polling when unfollowed.
+- [X] T086 [P] [US7] Implement `src/hooks/useCopyTrade.ts`: TanStack Query hook. When following a leader → poll `GET /api/leaders/:address/latest-position` (interval 10s). When new copyable position detected → set `pendingCopy` state with CopyParams. Expose `clearPendingCopy()`. Stop polling when unfollowed.
   - **Verify**: Hook detects new leader position; pendingCopy state populated.
   - **Depends on**: T085
 
-- [ ] T087 [US7] Implement `src/components/FollowButton.tsx`: toggle button — "Theo dõi để sao chép" / "Đang theo dõi ✓". On first follow → prompt for follower amount (DUSDC). On unfollow → confirm dialog. Uses `useFollowState`.
+- [X] T087 [US7] Implement `src/components/FollowButton.tsx`: toggle button — "Theo dõi để sao chép" / "Đang theo dõi ✓". On first follow → prompt for follower amount (DUSDC). On unfollow → confirm dialog. Uses `useFollowState`.
   - **Verify**: Button toggles state; amount prompt appears on first follow.
   - **Depends on**: T085
 
-- [ ] T088 [US7] Implement `src/components/CopyTradeModal.tsx`: modal triggered by `pendingCopy` state. Display: leader address (truncated), strategy label (plain Vietnamese), cost_dusdc, payout_dusdc, expiryMs countdown. "Sao chép" button → `buildCopyMintTx` → `useExecuteTx`. Disabled + reason when copyable=false. Uses TxStatusOverlay (T046) for pending/success/failure states.
+- [X] T088 [US7] Implement `src/components/CopyTradeModal.tsx`: modal triggered by `pendingCopy` state. Display: leader address (truncated), strategy label (plain Vietnamese), cost_dusdc, payout_dusdc, expiryMs countdown. "Sao chép" button → `buildCopyMintTx` → `useExecuteTx`. Disabled + reason when copyable=false. Uses TxStatusOverlay (T046) for pending/success/failure states.
   - **Verify**: Modal shows scaled params; sign → tx submitted; disabled when ineligible with reason.
   - **Depends on**: T082 (buildCopyMintTx), T086 (useCopyTrade), T046 (TxStatusOverlay)
 
-- [ ] T089 [US7] Wire FollowButton into `/leaderboard/[address]` page (T075). Wire CopyTradeModal into app layout (global — shows when any followed leader has pendingCopy).
+- [X] T089 [US7] Wire FollowButton into `/leaderboard/[address]` page (T075). Wire CopyTradeModal into app layout (global — shows when any followed leader has pendingCopy).
   - **Verify**: Full flow: /leaderboard/:address → follow → copy modal appears when leader has position.
   - **Depends on**: T075, T087, T088
 
-- [ ] T090 [US7] Handle all ineligibility states in CopyTradeModal: market closed → "Thị trường đã đóng", SVI stale → "Dữ liệu chưa được cập nhật", balance insufficient → "Số dư không đủ". Ensure "Sao chép" button stays disabled and `useExecuteTx` is NEVER called when copyable=false (FR-020).
+- [X] T090 [US7] Handle all ineligibility states in CopyTradeModal: market closed → "Thị trường đã đóng", SVI stale → "Dữ liệu chưa được cập nhật", balance insufficient → "Số dư không đủ". Ensure "Sao chép" button stays disabled and `useExecuteTx` is NEVER called when copyable=false (FR-020).
   - **Verify**: Each ineligibility reason displays; button disabled; no wallet popup triggered.
 
 **Checkpoint**: US7 UI complete. Full copy-trade flow works. Follow toggle does not affect open positions (FR-022). All labels in plain Vietnamese (FR-023). SC-009 satisfied.

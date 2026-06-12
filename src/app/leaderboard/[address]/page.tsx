@@ -1,10 +1,11 @@
 "use client";
 // T075 — Investor detail page: drill into one leader's settled record.
-// FollowButton is a placeholder here; copy-trade wiring lands in Phase 14.
+// Phase 14: real FollowButton (copy-trade) wired in.
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader.js";
 import { InvestorDetailView } from "@/components/InvestorDetail.js";
+import { FollowButton } from "@/components/FollowButton.js";
 import { useInvestorDetail } from "@/hooks/useInvestorDetail.js";
 import { truncateAddress } from "@/lib/leaderboard/computeLeaderboard.js";
 
@@ -22,20 +23,6 @@ function BackLink() {
   );
 }
 
-/** Placeholder follow control — copy-trade is wired in Phase 14. */
-function FollowButton() {
-  return (
-    <button
-      type="button"
-      disabled
-      title="Copy-trade is coming soon"
-      className="flex shrink-0 cursor-not-allowed items-center gap-2 rounded-xl border border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-500"
-    >
-      ＋ Follow <span className="text-xs text-zinc-600">(coming soon)</span>
-    </button>
-  );
-}
-
 export default function InvestorPage() {
   const params = useParams<{ address: string }>();
   const address = params?.address ?? "";
@@ -47,7 +34,7 @@ export default function InvestorPage() {
       <main className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-6 py-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <BackLink />
-          {data?.detail && <FollowButton />}
+          {data?.detail && <FollowButton leaderAddress={address} />}
         </div>
 
         {isLoading && (

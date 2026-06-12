@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SuiClientProvider, WalletProvider, createNetworkConfig } from "@mysten/dapp-kit";
 import { getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
+import { CopyTradeHost } from "@/components/CopyTradeHost.js";
 import "@mysten/dapp-kit/dist/index.css";
 
 const { networkConfig } = createNetworkConfig({
@@ -19,7 +20,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
-        <WalletProvider autoConnect>{children}</WalletProvider>
+        <WalletProvider autoConnect>
+          {children}
+          <CopyTradeHost />
+        </WalletProvider>
       </SuiClientProvider>
     </QueryClientProvider>
   );
