@@ -4,11 +4,11 @@ import type { PositionSummaryItem } from "@/types/predict-server.js";
 import type { InvestorDetail, RecentTrade, StrategyBreakdown, StrategyType } from "./types.js";
 import { classifyOutcome, inferStrategyType } from "./classify.js";
 
-/** Plain-Vietnamese strategy labels, consistent with the rest of the product. */
+/** Plain-language strategy labels, matching StrategyCard/PositionCard across the app. */
 export const STRATEGY_LABELS: Record<StrategyType, string> = {
-  binary_up: "Giá lên",
-  binary_down: "Phòng vệ khi giảm",
-  range: "Đi ngang trong vùng",
+  binary_up: "Price up",
+  binary_down: "Crash hedge",
+  range: "Stay in range",
 };
 
 const DEFAULT_RECENT_LIMIT = 5;

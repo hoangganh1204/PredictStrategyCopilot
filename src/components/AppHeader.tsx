@@ -10,6 +10,7 @@ import { ConnectButton } from "./ConnectButton.js";
 const TABS = [
   { href: "/play", label: "Play" },
   { href: "/positions", label: "Positions" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/vault", label: "Vault" },
 ] as const;
 

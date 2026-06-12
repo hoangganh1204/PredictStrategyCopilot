@@ -69,7 +69,7 @@ export function rankLeaders(allStats: LeaderStats[]): LeaderboardResult {
     leaders,
     sparse,
     message: sparse
-      ? "Dữ liệu còn ít — testnet hiện có chưa nhiều lệnh đã chốt. Bảng xếp hạng sẽ đầy đủ hơn khi có thêm người tham gia."
+      ? "Data is still thin — few settled bets on testnet so far. The leaderboard fills out as more people play."
       : undefined,
   };
 }

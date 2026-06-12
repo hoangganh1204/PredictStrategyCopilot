@@ -18,7 +18,7 @@ export async function GET(
     const managerId = await findManagerId(address);
     if (!managerId) {
       return NextResponse.json(
-        { ok: false, code: "ERR_NO_ACTIVITY", message: "Địa chỉ này chưa có hoạt động trên on-chain." },
+        { ok: false, code: "ERR_NO_ACTIVITY", message: "This address has no on-chain activity yet." },
         { status: 404 }
       );
     }
@@ -27,7 +27,7 @@ export async function GET(
     const hasSettled = positions.some((p) => classifyOutcome(p.status) !== "open");
     if (!hasSettled) {
       return NextResponse.json(
-        { ok: false, code: "ERR_NO_ACTIVITY", message: "Địa chỉ này chưa có lệnh nào đã chốt." },
+        { ok: false, code: "ERR_NO_ACTIVITY", message: "This address has no settled bets yet." },
         { status: 404 }
       );
     }
@@ -35,7 +35,7 @@ export async function GET(
     return NextResponse.json(buildInvestorDetail(address, positions, RECENT_LIMIT));
   } catch {
     return NextResponse.json(
-      { ok: false, code: "ERR_INTERNAL", message: "Không tải được chi tiết nhà đầu tư." },
+      { ok: false, code: "ERR_INTERNAL", message: "Couldn't load this investor's detail." },
       { status: 500 }
     );
   }

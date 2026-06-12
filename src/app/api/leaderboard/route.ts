@@ -45,7 +45,7 @@ export async function GET() {
       {
         leaders: [],
         sparse: true,
-        message: "Không tải được bảng xếp hạng lúc này. Vui lòng thử lại.",
+        message: "Couldn't load the leaderboard right now. Please try again.",
       },
       { status: 200 }
     );

@@ -378,24 +378,24 @@
 
 **Spec refs**: FR-015, FR-016, FR-017, FR-023, SC-008
 
-- [ ] T070 [P] [US6] Implement `src/hooks/useLeaderboard.ts`: TanStack Query hook calling `GET /api/leaderboard`. Return `LeaderboardResult`. staleTime 30s. Handle loading + error states.
+- [X] T070 [P] [US6] Implement `src/hooks/useLeaderboard.ts`: TanStack Query hook calling `GET /api/leaderboard`. Return `LeaderboardResult`. staleTime 30s. Handle loading + error states.
   - **Verify**: Hook returns leaders for testnet data.
 
-- [ ] T071 [P] [US6] Implement `src/hooks/useInvestorDetail.ts`: TanStack Query hook calling `GET /api/leaders/:address`. Return `InvestorDetail` or 404 state. staleTime 30s.
+- [X] T071 [P] [US6] Implement `src/hooks/useInvestorDetail.ts`: TanStack Query hook calling `GET /api/leaders/:address`. Return `InvestorDetail` or 404 state. staleTime 30s.
   - **Verify**: Hook returns detail for a known testnet address.
 
-- [ ] T072 [P] [US6] Implement `src/components/LeaderboardTable.tsx`: table/list of ranked leaders. Each row: rank #, truncated address, netPnl (formatted DUSDC), winRate (%), settledCount. Clickable rows → navigate to `/leaderboard/:address`. Loading skeleton after 300ms. Sparse state: Vietnamese message (FR-017).
+- [X] T072 [P] [US6] Implement `src/components/LeaderboardTable.tsx`: table/list of ranked leaders. Each row: rank #, truncated address, netPnl (formatted DUSDC), winRate (%), settledCount. Clickable rows → navigate to `/leaderboard/:address`. Loading skeleton after 300ms. Sparse state: Vietnamese message (FR-017).
   - **Verify**: Table renders; click navigates; sparse message shows when no data.
 
-- [ ] T073 [US6] Implement `src/components/InvestorDetail.tsx`: recent trades list (strategy label in plain Vietnamese, result, amount). Strategy breakdown chart/table (count + netPnl per type). Back link to /leaderboard. No jargon (FR-023).
+- [X] T073 [US6] Implement `src/components/InvestorDetail.tsx`: recent trades list (strategy label in plain Vietnamese, result, amount). Strategy breakdown chart/table (count + netPnl per type). Back link to /leaderboard. No jargon (FR-023).
   - **Verify**: Detail renders with plain-language labels; no "strike", "SVI", "oracle" text.
   - **Depends on**: T071
 
-- [ ] T074 [US6] Implement `src/app/leaderboard/page.tsx`: compose LeaderboardTable + navigation header. Add "Bảng xếp hạng" nav link to app layout.
+- [X] T074 [US6] Implement `src/app/leaderboard/page.tsx`: compose LeaderboardTable + navigation header. Add "Bảng xếp hạng" nav link to app layout.
   - **Verify**: `/leaderboard` loads and displays ranked list from testnet.
   - **Depends on**: T070, T072
 
-- [ ] T075 [US6] Implement `src/app/leaderboard/[address]/page.tsx`: compose InvestorDetail + back nav + FollowButton placeholder (wired in Phase 14).
+- [X] T075 [US6] Implement `src/app/leaderboard/[address]/page.tsx`: compose InvestorDetail + back nav + FollowButton placeholder (wired in Phase 14).
   - **Verify**: `/leaderboard/0x...` loads investor detail; back link works.
   - **Depends on**: T073
 
