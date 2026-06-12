@@ -315,6 +315,199 @@
 
 ---
 
+## Phase 11: US6 — Leaderboard Engine (TDD)
+
+**Goal**: Pure leaderboard aggregation from on-chain settled data. API routes serve ranked leaders in ≤ 3s.
+
+**Independent Test**: `pnpm vitest run tests/unit/leaderboard/ tests/integration/api-leaderboard.test.ts` — all pass.
+
+**Spec refs**: FR-014, FR-015, FR-016, FR-017, SC-007, SC-008
+
+### Probe & Types
+
+- [ ] T060 [US6] Probe: discover how to enumerate all managers with settled positions on testnet. Try `GET /predicts/:predict_id/managers` on Public Server. If unavailable, use `suix_queryEvents` filtering for `predict::MintEvent` → extract unique `manager_id` values. Document working approach in `scripts/probe-leaderboard.ts`.
+  - **Verify**: Script logs list of manager IDs with at least 1 settled position.
+
+- [ ] T061 [US6] Define leaderboard types in `src/lib/leaderboard/types.ts`: `LeaderStats` (address, netPnl_raw, winRate, settledCount, recentStrategyTypes), `RankedLeader` (LeaderStats + rank), `LeaderboardResult` ({ leaders: RankedLeader[], sparse: boolean, message?: string }), `InvestorDetail` (address, recentTrades, strategyBreakdown), `StrategyBreakdown` (type, count, netPnl_raw).
+  - **Verify**: `tsc --noEmit` passes.
+
+- [ ] T062 [US6] Extend `src/lib/predict-client.ts`: add `fetchAllManagerIds(predictId)` using approach from T060. Add `fetchManagerPositions(managerId)` alias if not already present (wraps existing `fetchPositionsSummary`).
+  - **Verify**: `tsc --noEmit` passes; function returns real manager IDs from testnet.
+  - **Depends on**: T060
+
+### Tests First (TDD — Red Phase)
+
+- [ ] T063 [P] [US6] Write `tests/unit/leaderboard/computeLeaderboard.test.ts`: test `aggregateLeaderStats()` — netPnl from settled only, winRate = won/(won+lost), settledCount excludes active. Test `rankLeaders()` — sorted by netPnl desc, sparse flag when < threshold. Test `truncateAddress()` — "0xABCD...1234" format. Use fixtures from `PositionSummaryItem` type (T008).
+  - **Verify**: Tests exist and FAIL (functions not yet implemented).
+
+- [ ] T064 [P] [US6] Write `tests/unit/leaderboard/investorDetail.test.ts`: test `getStrategyBreakdown()` — groups positions by inferred StrategyType (from strike/lower_strike/is_up fields), returns count + netPnl per type. Test `getRecentTrades()` — returns last N trades with plain-language strategy labels.
+  - **Verify**: Tests exist and FAIL.
+
+### Implementation (TDD — Green Phase)
+
+- [ ] T065 [US6] Implement `src/lib/leaderboard/computeLeaderboard.ts`: `aggregateLeaderStats(positions: PositionSummaryItem[]): LeaderStats` — only count settled_won/settled_lost/redeemed in metrics; return 0 winRate (not NaN) when no settled. `rankLeaders(allStats: LeaderStats[]): LeaderboardResult` — sort netPnl desc, tie-break winRate desc; set sparse=true when total settledCount < MIN_SETTLED_THRESHOLD. `truncateAddress(addr: string): string` — 6+"..."+4 chars.
+  - **Verify**: `pnpm vitest run tests/unit/leaderboard/computeLeaderboard.test.ts` — all GREEN.
+
+- [ ] T066 [US6] Implement `src/lib/leaderboard/investorDetail.ts`: `getStrategyBreakdown(positions)` — infer StrategyType from PositionSummaryItem fields (has lower_strike → range; has is_up=true → binary_up; is_up=false → binary_down). `getRecentTrades(positions, limit)` — return last N settled trades with strategy label in plain Vietnamese.
+  - **Verify**: `pnpm vitest run tests/unit/leaderboard/investorDetail.test.ts` — all GREEN.
+
+### API Routes
+
+- [ ] T067 [US6] Implement `src/app/api/leaderboard/route.ts`: `GET /api/leaderboard`. Fetch all manager IDs (T062) → parallel fetch positions for each → aggregate + rank → return `LeaderboardResult` JSON. Handle sparse case (FR-017). Cache-friendly: TanStack Query staleTime 30s on client.
+  - **Verify**: `curl localhost:3000/api/leaderboard` returns ranked leaders from testnet data.
+  - **Depends on**: T062, T065
+
+- [ ] T068 [US6] Implement `src/app/api/leaders/[address]/route.ts`: `GET /api/leaders/:address`. Find manager by owner address → fetch positions → return `InvestorDetail` JSON (recentTrades + strategyBreakdown). Return 404 `ERR_NO_ACTIVITY` if no settled positions.
+  - **Verify**: `curl localhost:3000/api/leaders/0x...` returns investor detail JSON.
+  - **Depends on**: T066
+
+### Integration Test
+
+- [ ] T069 [US6] Write `tests/integration/api-leaderboard.test.ts`: hit API Routes with MSW mocking Public Server. Assert: correct ranked order, sparse flag on empty data, 404 for unknown address, response shape matches `LeaderboardResult` / `InvestorDetail`.
+  - **Verify**: `pnpm vitest run tests/integration/api-leaderboard.test.ts` — all GREEN.
+
+**Checkpoint**: Leaderboard engine complete. API routes serve ranked leaders from on-chain data. FR-014, FR-015, FR-016, FR-017, SC-007 satisfied.
+
+---
+
+## Phase 12: US6 — Leaderboard UI
+
+**Goal**: User opens leaderboard page, sees ranked investors, drills down into detail — all within 3s.
+
+**Independent Test**: Open /leaderboard → list displays; click investor → detail shows recent trades + strategy breakdown.
+
+**Spec refs**: FR-015, FR-016, FR-017, FR-023, SC-008
+
+- [ ] T070 [P] [US6] Implement `src/hooks/useLeaderboard.ts`: TanStack Query hook calling `GET /api/leaderboard`. Return `LeaderboardResult`. staleTime 30s. Handle loading + error states.
+  - **Verify**: Hook returns leaders for testnet data.
+
+- [ ] T071 [P] [US6] Implement `src/hooks/useInvestorDetail.ts`: TanStack Query hook calling `GET /api/leaders/:address`. Return `InvestorDetail` or 404 state. staleTime 30s.
+  - **Verify**: Hook returns detail for a known testnet address.
+
+- [ ] T072 [P] [US6] Implement `src/components/LeaderboardTable.tsx`: table/list of ranked leaders. Each row: rank #, truncated address, netPnl (formatted DUSDC), winRate (%), settledCount. Clickable rows → navigate to `/leaderboard/:address`. Loading skeleton after 300ms. Sparse state: Vietnamese message (FR-017).
+  - **Verify**: Table renders; click navigates; sparse message shows when no data.
+
+- [ ] T073 [US6] Implement `src/components/InvestorDetail.tsx`: recent trades list (strategy label in plain Vietnamese, result, amount). Strategy breakdown chart/table (count + netPnl per type). Back link to /leaderboard. No jargon (FR-023).
+  - **Verify**: Detail renders with plain-language labels; no "strike", "SVI", "oracle" text.
+  - **Depends on**: T071
+
+- [ ] T074 [US6] Implement `src/app/leaderboard/page.tsx`: compose LeaderboardTable + navigation header. Add "Bảng xếp hạng" nav link to app layout.
+  - **Verify**: `/leaderboard` loads and displays ranked list from testnet.
+  - **Depends on**: T070, T072
+
+- [ ] T075 [US6] Implement `src/app/leaderboard/[address]/page.tsx`: compose InvestorDetail + back nav + FollowButton placeholder (wired in Phase 14).
+  - **Verify**: `/leaderboard/0x...` loads investor detail; back link works.
+  - **Depends on**: T073
+
+**Checkpoint**: US6 UI complete. Leaderboard displays, sparse state handled, detail drill-down works. SC-008 satisfied.
+
+---
+
+## Phase 13: US7 — Copy-trade Engine (TDD)
+
+**Goal**: Copy-trade logic builds correct unsigned transactions preserving leader strategy type, scaled to follower amount. All three eligibility gates enforce correctly.
+
+**Independent Test**: `pnpm vitest run tests/unit/copytrade/ tests/integration/api-copytrade.test.ts` — all pass.
+
+**Spec refs**: FR-018, FR-019, FR-020, FR-021, SC-010, SC-011
+
+### Tests First (TDD — Red Phase)
+
+- [ ] T076 [P] [US7] Write `tests/unit/copytrade/scaleCopyParams.test.ts`: test `scaleCopyParams()` — preserves strategyType from leader, scales quantity_raw by follower amount (not leader amount), binary: isUp + strike match leader, range: lowerStrike + upperStrike match leader exactly.
+  - **Verify**: Tests exist and FAIL.
+
+- [ ] T077 [P] [US7] Write `tests/unit/copytrade/validateCopyEligibility.test.ts`: test `validateCopyEligibility()` — returns { eligible: false, reason } for: oracle not active, SVI > 30s stale (boundary: exactly 30_000ms → blocked), balance < cost. Returns { eligible: true } when all 3 pass. Reason strings are non-empty Vietnamese.
+  - **Verify**: Tests exist and FAIL.
+
+- [ ] T078 [P] [US7] Write `tests/unit/copytrade/buildCopyMintTx.test.ts`: test `buildCopyMintTx()` — returns `Transaction` object (not signed digest), binary calls `predict::mint`, range calls `predict::mint_range`. **Assert function signature has NO signer/wallet parameter.**
+  - **Verify**: Tests exist and FAIL.
+
+### Implementation (TDD — Green Phase)
+
+- [ ] T079 [US7] Define copy-trade types in `src/lib/copytrade/types.ts`: `CopyParams` (strategyType, oracleId, strike_raw/lowerStrike_raw/upperStrike_raw, isUp?, quantity_raw, cost_raw, payout_raw, expiryMs), `CopyEligibility` ({ eligible: boolean, reason?: string }), `FollowConfig` (leaderAddress, followerAmount_raw).
+  - **Verify**: `tsc --noEmit` passes.
+
+- [ ] T080 [US7] Implement `src/lib/copytrade/scaleCopyParams.ts`: `scaleCopyParams(leaderPosition: PositionSummaryItem, followerAmount_raw: bigint, pricingFn: PricingFn): Promise<CopyParams>`. Infer strategyType from leader position fields. Keep leader's strike/range. Compute follower quantity via pricingFn (reuse devInspect pattern from T024b). Return CopyParams with cost_raw + payout_raw.
+  - **Verify**: `pnpm vitest run tests/unit/copytrade/scaleCopyParams.test.ts` — all GREEN.
+  - **Depends on**: T079
+
+- [ ] T081 [US7] Implement `src/lib/copytrade/validateCopyEligibility.ts`: `validateCopyEligibility(oracleState, sviTimestamp, followerBalance_raw, estimatedCost_raw): CopyEligibility`. Check 3 conditions: (a) oracle.status === "active", (b) Date.now() - sviTimestamp ≤ 30_000, (c) followerBalance_raw ≥ estimatedCost_raw. Return { eligible: false, reason } with plain Vietnamese reason on first failure.
+  - **Verify**: `pnpm vitest run tests/unit/copytrade/validateCopyEligibility.test.ts` — all GREEN.
+
+- [ ] T082 [US7] Implement `src/lib/copytrade/buildCopyMintTx.ts`: `buildCopyMintTx(params: CopyParams, managerId: string): Transaction`. Build PTB using existing `buildMintTx` (T030a) for binary or range. **CRITICAL: function MUST NOT import from `@mysten/dapp-kit` or any wallet/signer module. Returns unsigned Transaction only.**
+  - **Verify**: `pnpm vitest run tests/unit/copytrade/buildCopyMintTx.test.ts` — all GREEN.
+  - **Depends on**: T030a (buildMintTx), T079
+
+### API Route + Integration
+
+- [ ] T083 [US7] Implement `src/app/api/leaders/[address]/latest-position/route.ts`: `GET /api/leaders/:address/latest-position?followerAmount=X&followerManager=Y`. Fetch leader's latest active/recently-minted position. Run `validateCopyEligibility`. If eligible → `scaleCopyParams` → return `{ copyable: true, strategyType, copyParams }`. If not → return `{ copyable: false, reason }` (HTTP 200, not 400).
+  - **Verify**: `curl localhost:3000/api/leaders/0x.../latest-position?followerAmount=10&followerManager=0x...` returns copyable response.
+  - **Depends on**: T080, T081
+
+- [ ] T084 [US7] Write `tests/integration/api-copytrade.test.ts`: hit API Route with MSW. Assert: copyable=true returns valid copyParams with correct strategyType. Assert: market closed → copyable=false. Assert: stale SVI → copyable=false. Assert: insufficient balance → copyable=false. Assert: reason strings are non-empty.
+  - **Verify**: `pnpm vitest run tests/integration/api-copytrade.test.ts` — all GREEN.
+
+**Checkpoint**: Copy-trade engine complete. All three eligibility gates enforce. Strategy type preserved. No auto-signing. FR-018, FR-019, FR-020, SC-010, SC-011 satisfied.
+
+---
+
+## Phase 14: US7 — Copy-trade UI
+
+**Goal**: Follower follows a leader, receives copy notification, confirms and signs — position appears in dashboard.
+
+**Independent Test**: Follow leader → leader has recent position → copy modal appears → sign → position in /positions.
+
+**Spec refs**: FR-018, FR-019, FR-020, FR-021, FR-022, FR-023, SC-009
+
+- [ ] T085 [P] [US7] Implement `src/hooks/useFollowState.ts`: manage follow state in localStorage. `followLeader(address, amount_raw)`, `unfollowLeader(address)`, `getFollowedLeaders(): FollowConfig[]`, `isFollowing(address): boolean`. Persists across page reloads.
+  - **Verify**: Follow/unfollow persists; `getFollowedLeaders()` returns correct list after reload.
+
+- [ ] T086 [P] [US7] Implement `src/hooks/useCopyTrade.ts`: TanStack Query hook. When following a leader → poll `GET /api/leaders/:address/latest-position` (interval 10s). When new copyable position detected → set `pendingCopy` state with CopyParams. Expose `clearPendingCopy()`. Stop polling when unfollowed.
+  - **Verify**: Hook detects new leader position; pendingCopy state populated.
+  - **Depends on**: T085
+
+- [ ] T087 [US7] Implement `src/components/FollowButton.tsx`: toggle button — "Theo dõi để sao chép" / "Đang theo dõi ✓". On first follow → prompt for follower amount (DUSDC). On unfollow → confirm dialog. Uses `useFollowState`.
+  - **Verify**: Button toggles state; amount prompt appears on first follow.
+  - **Depends on**: T085
+
+- [ ] T088 [US7] Implement `src/components/CopyTradeModal.tsx`: modal triggered by `pendingCopy` state. Display: leader address (truncated), strategy label (plain Vietnamese), cost_dusdc, payout_dusdc, expiryMs countdown. "Sao chép" button → `buildCopyMintTx` → `useExecuteTx`. Disabled + reason when copyable=false. Uses TxStatusOverlay (T046) for pending/success/failure states.
+  - **Verify**: Modal shows scaled params; sign → tx submitted; disabled when ineligible with reason.
+  - **Depends on**: T082 (buildCopyMintTx), T086 (useCopyTrade), T046 (TxStatusOverlay)
+
+- [ ] T089 [US7] Wire FollowButton into `/leaderboard/[address]` page (T075). Wire CopyTradeModal into app layout (global — shows when any followed leader has pendingCopy).
+  - **Verify**: Full flow: /leaderboard/:address → follow → copy modal appears when leader has position.
+  - **Depends on**: T075, T087, T088
+
+- [ ] T090 [US7] Handle all ineligibility states in CopyTradeModal: market closed → "Thị trường đã đóng", SVI stale → "Dữ liệu chưa được cập nhật", balance insufficient → "Số dư không đủ". Ensure "Sao chép" button stays disabled and `useExecuteTx` is NEVER called when copyable=false (FR-020).
+  - **Verify**: Each ineligibility reason displays; button disabled; no wallet popup triggered.
+
+**Checkpoint**: US7 UI complete. Full copy-trade flow works. Follow toggle does not affect open positions (FR-022). All labels in plain Vietnamese (FR-023). SC-009 satisfied.
+
+---
+
+## Phase 15: Social Trading Polish
+
+**Purpose**: Cross-cutting validation for US6 + US7. Security, performance, UX compliance.
+
+- [ ] T091 [P] Validate FR-023 compliance: audit all social-trading components for option jargon. Grep for "strike price", "implied vol", "SVI", "oracle", "expiry" in `src/components/Leaderboard*`, `src/components/Investor*`, `src/components/CopyTrade*`, `src/components/Follow*` — replace with plain Vietnamese equivalents.
+  - **Verify**: Grep → 0 jargon matches in social-trading components.
+
+- [ ] T092 [P] Validate FR-016 compliance: audit leaderboard for PII. Verify all addresses use `truncateAddress()`. No full 66-char addresses visible. No wallet metadata beyond address.
+  - **Verify**: Inspect rendered leaderboard — only "0xABCD...1234" format visible.
+
+- [ ] T093 [P] Validate SC-011: verify `src/lib/copytrade/buildCopyMintTx.ts` has zero imports from `@mysten/dapp-kit`, `useSignAndExecuteTransaction`, or any wallet API. Grep the file — assert 0 matches.
+  - **Verify**: `grep -c "dapp-kit\|signAndExecute\|wallet" src/lib/copytrade/buildCopyMintTx.ts` → 0.
+
+- [ ] T094 Validate SC-008: performance test — open `/leaderboard` with testnet data → measure time from navigation to list render. Target: < 3 seconds.
+  - **Verify**: Timed page load < 3s on localhost with real testnet data.
+
+- [ ] T095 End-to-end manual test: full social-trading flow. Open leaderboard → verify leaders reflect real on-chain data → click leader → view detail → follow with 5 DUSDC → wait for/trigger copy notification → sign → position appears in /positions → unfollow → verify no new notifications. Target: trọn vòng < 1 phút (SC-009).
+  - **Verify**: Full flow completes; copied position goes through standard lifecycle (FR-021).
+
+**Checkpoint**: Social trading feature complete. All FRs (014–023) and SCs (007–012) satisfied.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies (Strict)
@@ -331,7 +524,17 @@ Phase 1 (Setup)
         │
         └─→ Phase 8 (US4 Positions) ← needs Phase 5B (manager + balance)
               └─→ Phase 9 (US5 Redeem) ← needs positions
-  Phase 10 (Polish) ← after all phases
+  Phase 10 (Polish) ← after Phase 1–9
+
+  ─── Social Trading Extension (US6 + US7) ───
+  Phase 10 (done)
+        ├─→ Phase 11 (US6 Leaderboard Engine) ← needs predict-client (T023), types (T008)
+        │     └─→ Phase 12 (US6 Leaderboard UI) ← needs API routes
+        │
+        ├─→ Phase 13 (US7 Copy-trade Engine) ← needs buildMintTx (T030a), PricingFn (T024b)
+        │     └─→ Phase 14 (US7 Copy-trade UI) ← needs copy-trade logic + leaderboard UI (T075)
+        │
+        └─→ Phase 15 (Social Trading Polish) ← after Phase 12 + Phase 14
 ```
 
 ### Parallel Opportunities
@@ -344,6 +547,12 @@ Phase 1 (Setup)
 - **Phase 6**: T040, T041 parallel (hook vs component)
 - **Phase 8**: T048, T049 parallel (hook vs component)
 - **Phase 10**: T055, T056, T057 all parallel
+- **Phase 11 tests**: T063, T064 parallel (different test files)
+- **Phase 11 and Phase 13 are independent** — can start in parallel after Phase 10
+- **Phase 12**: T070, T071, T072 all parallel (hook + component files)
+- **Phase 13 tests**: T076, T077, T078 all parallel (different test files)
+- **Phase 14**: T085, T086 parallel (different hook files)
+- **Phase 15**: T091, T092, T093 all parallel
 
 ### Critical Path
 
@@ -358,6 +567,16 @@ T001 → T004 → T006 → T007 → T008 ──┐
   → T036 → T037 → T038 (balance + deposit — after T028/T029)
   → T044 → T045 → T047 (UI integration)
   → T051 → T052 → T054 (positions + redeem)
+  → T055–T059 (polish)
+
+  ─── Social Trading Critical Path ───
+  → T060 → T062 → T065 → T067 → T069 (leaderboard engine)
+  → T070 → T072 → T074 (leaderboard UI)
+  → T076 → T080 → T082 → T083 → T084 (copy-trade engine)
+  → T085 → T086 → T088 → T089 → T090 (copy-trade UI)
+  → T091–T095 (social trading polish)
+
+  Longest path: T060 → T062 → T065 → T067 → T069 → T074 → T075 → T089 → T095
 ```
 
 ---
@@ -377,4 +596,9 @@ T001 → T004 → T006 → T007 → T008 ──┐
 | 8. US4 Positions | T048–T051 (4) | 2 parallel |
 | 9. US5 Redeem | T052–T054 (3) | sequential |
 | 10. Polish | T055–T059 (5) | 3 parallel |
-| **Total** | **61 tasks** | |
+| 11. US6 Leaderboard Engine | T060–T069 (10) | 2 test parallel |
+| 12. US6 Leaderboard UI | T070–T075 (6) | 3 parallel (T070, T071, T072) |
+| 13. US7 Copy-trade Engine | T076–T084 (9) | 3 test parallel |
+| 14. US7 Copy-trade UI | T085–T090 (6) | 2 parallel (T085, T086) |
+| 15. Social Trading Polish | T091–T095 (5) | 3 parallel |
+| **Total** | **97 tasks** | |

@@ -88,6 +88,43 @@ Khi thị trường chốt và người dùng thắng, hệ thống hiển thị
 
 ---
 
+### User Story 6 — Xem bảng xếp hạng nhà đầu tư (Priority: P1)
+
+Người dùng mở mục Bảng xếp hạng. Hệ thống hiển thị danh sách nhà đầu tư xếp theo hiệu quả (lãi ròng / tỷ lệ thắng / số lệnh đã settle), tính hoàn toàn từ kết quả on-chain thật. Mỗi dòng hiển thị: định danh rút gọn (địa chỉ ví dạng ngắn, không thông tin cá nhân), lãi/lỗ ròng, tỷ lệ thắng, số lệnh. Người dùng bấm vào một nhà đầu tư để xem chi tiết: lịch sử lệnh gần đây, các chiến lược họ hay dùng.
+
+**Why this priority**: Đây là điểm vào của vòng khám phá xã hội — người mới cần nhìn thấy ai đang thật sự hiệu quả trước khi có thể bắt chước. Không có leaderboard thì copy-trade không có ý nghĩa.
+
+**Independent Test**: Mở trang Bảng xếp hạng → danh sách hiển thị trong ≤ 3 giây với đúng netPnl / winRate / settledCount từ dữ liệu on-chain thật.
+
+**Acceptance Scenarios**:
+
+1. **Given** có nhiều người chơi đã có lệnh settle trên testnet, **When** người dùng mở Bảng xếp hạng, **Then** hệ thống hiển thị danh sách xếp theo lãi ròng giảm dần, mỗi dòng gồm: địa chỉ rút gọn, lãi/lỗ ròng (DUSDC), tỷ lệ thắng (%), số lệnh đã settle — tải xong trong ≤ 3 giây.
+2. **Given** bảng xếp hạng đang hiển thị, **When** người dùng bấm vào một nhà đầu tư, **Then** hệ thống hiển thị chi tiết: lịch sử lệnh gần đây (loại chiến lược bằng ngôn ngữ thường, kết quả thắng/thua, số tiền) và phân bổ chiến lược họ hay dùng.
+3. **Given** ít người chơi trên testnet (dưới ngưỡng tối thiểu lệnh đã settle), **When** người dùng mở Bảng xếp hạng, **Then** hệ thống hiển thị thông báo trung thực (ví dụ "Chưa có đủ kết quả để xếp hạng") — không hiển thị bảng trống, không giả vờ có hoạt động.
+4. **Given** bảng xếp hạng hiển thị, **When** kiểm tra dữ liệu, **Then** mọi chỉ số (lãi/lỗ, tỷ lệ thắng, số lệnh) khớp 100% với dữ liệu settle thật on-chain — không có số liệu giả hay demo.
+
+---
+
+### User Story 7 — Sao chép lệnh có xác nhận (Priority: P1)
+
+Từ chi tiết một nhà đầu tư, người dùng chọn "Theo dõi để sao chép" và cấu hình số tiền muốn dùng cho mỗi lệnh copy. Khi leader vào lệnh mới, hệ thống phát hiện và chuẩn bị sẵn lệnh tương ứng (đúng loại chiến lược, quy mô theo vốn follower), nhưng follower luôn phải tự xác nhận và ký qua ví. Đây là copy-trade bán tự động — ràng buộc bắt buộc bởi protocol owner-only mint, không phải lựa chọn thiết kế.
+
+**Why this priority**: Đây là hành động tạo giá trị trực tiếp từ vòng khám phá xã hội — người mới sao chép thay vì tự phán đoán. Phải song song P1 với leaderboard vì không ai sẽ sao chép nếu không nhìn thấy bảng xếp hạng trước.
+
+**Independent Test**: Theo dõi leader → leader vào lệnh → follower nhận thông báo với lệnh chuẩn bị sẵn → bấm "Sao chép" → ký → vị thế xuất hiện trong dashboard.
+
+**Acceptance Scenarios**:
+
+1. **Given** follower đang theo dõi leader và leader vừa vào lệnh mới, **When** hệ thống phát hiện, **Then** thông báo cho follower với lệnh đã chuẩn bị sẵn: loại chiến lược (giữ đúng ý nghĩa: đứng yên / lên / phòng sập), vùng giá/mức giá tương ứng, chi phí (quy mô theo vốn follower), tiền thắng tối đa.
+2. **Given** follower xem thông báo sao chép, **When** bấm "Sao chép" và ký qua ví, **Then** giao dịch được submit lên testnet và vị thế xuất hiện trong dashboard follower như vị thế bình thường — đi qua đúng vòng đời (đang hoạt động → chờ chốt → đã chốt → nhận thưởng).
+3. **Given** lệnh không còn sao chép được (thị trường đã đóng), **When** follower cố sao chép, **Then** hệ thống chặn và báo rõ lý do bằng ngôn ngữ thường — không cho copy.
+4. **Given** dữ liệu biến động quá cũ (> 30 giây), **When** follower cố sao chép, **Then** hệ thống chặn và báo dữ liệu chưa được cập nhật — không cho copy.
+5. **Given** số dư tài khoản chơi follower không đủ để trả chi phí lệnh copy, **When** follower cố sao chép, **Then** hệ thống chặn và báo số dư không đủ — không mở popup ví.
+6. **Given** follower đang theo dõi leader, **When** follower tắt theo dõi, **Then** không nhận thông báo copy mới nữa, nhưng các vị thế đã mở không bị ảnh hưởng (không hủy, không thay đổi trạng thái).
+7. **Given** bất kỳ lệnh copy nào, **When** kiểm tra luồng ký, **Then** mọi lệnh đều có một bước ký thủ công qua ví — hệ thống không bao giờ giữ khóa riêng hay tự ký hộ.
+
+---
+
 ### Edge Cases
 
 - Điều gì xảy ra khi kết nối mạng bị mất giữa chừng lúc submit giao dịch?
@@ -96,6 +133,10 @@ Khi thị trường chốt và người dùng thắng, hệ thống hiển thị
 - Điều gì xảy ra khi người dùng có nhiều vị thế đang mở đồng thời trên nhiều kỳ hạn?
 - Điều gì xảy ra khi số dư tài khoản chơi = 0 nhưng ví vẫn còn DUSDC — người dùng cần nạp tiền trước khi vào lệnh?
 - Điều gì xảy ra khi cả số dư tài khoản chơi lẫn số dư ví đều = 0?
+- Điều gì xảy ra khi leader vào lệnh nhưng follower đang offline — lệnh copy có được queue lại hay bị mất?
+- Điều gì xảy ra khi nhiều follower cùng sao chép một leader đồng thời — có xung đột on-chain không?
+- Điều gì xảy ra khi leader vào lệnh rồi thị trường đóng trước khi follower kịp ký?
+- Điều gì xảy ra khi follower theo dõi nhiều leader cùng lúc — hiển thị thông báo copy thế nào?
 
 ## Requirements *(mandatory)*
 
@@ -114,6 +155,16 @@ Khi thị trường chốt và người dùng thắng, hệ thống hiển thị
 - **FR-011**: Hệ thống PHẢI xử lý tất cả kết quả giao dịch: thành công, thất bại, và người dùng từ chối ký — không tình huống nào làm ứng dụng treo.
 - **FR-012**: MVP áp dụng cơ chế owner-only redeem: chỉ chủ sở hữu tài khoản chơi mới được tự nhận thưởng về tài khoản của mình.
 - **FR-013**: Hệ thống PHẢI hỗ trợ hành vi nạp tiền từ ví vào tài khoản chơi (deposit): người dùng xác nhận số tiền DUSDC muốn nạp, ký giao dịch, và số dư tài khoản chơi được cập nhật sau khi giao dịch thành công. Đây là bước bắt buộc trước khi có thể vào lệnh lần đầu.
+- **FR-014**: Leaderboard PHẢI tính toán hoàn toàn từ dữ liệu on-chain thật (lệnh đã mint/redeem, kết quả đã settle); KHÔNG được seed dữ liệu giả hay demo.
+- **FR-015**: Leaderboard PHẢI xếp hạng theo các chỉ số đo được và minh bạch: lãi/lỗ ròng, tỷ lệ thắng, số lệnh đã settle. Người dùng phải hiểu được cách xếp hạng.
+- **FR-016**: Leaderboard PHẢI chỉ hiển thị định danh rút gọn dạng địa chỉ ví/tài khoản; KHÔNG thu thập hay hiển thị thông tin cá nhân nào.
+- **FR-017**: Hệ thống PHẢI xử lý trường hợp dữ liệu thưa (ít người chơi trên testnet): hiển thị thông báo trung thực, không giả vờ có nhiều hoạt động.
+- **FR-018**: Copy-trade PHẢI là bán tự động: follower luôn phải tự ký mọi lệnh; hệ thống KHÔNG BAO GIỜ giữ khóa riêng hay tự ký hộ.
+- **FR-019**: Khi sao chép, hệ thống PHẢI dựng lệnh tương ứng đúng loại chiến lược của leader (giữ ý nghĩa: đứng yên / lên / phòng sập), nhưng quy mô theo vốn của follower, không phải sao chép nguyên số tiền của leader.
+- **FR-020**: Trước khi cho copy, hệ thống PHẢI kiểm tra: (a) thị trường còn mở, (b) dữ liệu biến động không quá cũ (≤ 30 giây), (c) số dư follower đủ. Nếu vi phạm bất kỳ điều kiện nào, chặn và báo rõ lý do.
+- **FR-021**: Lệnh copy sau khi vào PHẢI đi qua đúng vòng đời vị thế như lệnh thường (đang hoạt động → chờ chốt → đã chốt → nhận thưởng), không tạo trạng thái đặc biệt.
+- **FR-022**: Việc theo dõi một leader PHẢI có thể bật/tắt bất cứ lúc nào; tắt theo dõi không ảnh hưởng các vị thế đã mở.
+- **FR-023**: Mọi nhãn và mô tả trong leaderboard và copy-trade PHẢI dùng ngôn ngữ thường, nhất quán với phần còn lại của sản phẩm; không phơi bày thuật ngữ chuyên ngành.
 
 ### Key Entities
 
@@ -121,6 +172,8 @@ Khi thị trường chốt và người dùng thắng, hệ thống hiển thị
 - **Thị trường (Market)**: Một kỳ hạn cụ thể đang mở trên protocol (15 phút / 30 phút / 1 giờ); có trạng thái mở/đóng, giá tham chiếu, biến động, tập mức giá hợp lệ.
 - **Chiến lược (Strategy)**: Một đề xuất được tính toán từ dữ liệu thị trường; có loại (range / binary-up / binary-down), mức giá/khoảng giá, chi phí, tiền thắng, xác suất, countdown.
 - **Vị thế (Position)**: Một lệnh đã vào thành công; có trạng thái, loại cược, mức giá, số tiền đặt, P&L tạm tính.
+- **Nhà đầu tư / Leader (Investor)**: Bất kỳ người chơi nào có lệnh đã settle trên on-chain; xuất hiện tự động trên leaderboard, không cần đăng ký. Được nhận diện bằng địa chỉ ví rút gọn.
+- **Follower**: Người chơi chọn theo dõi một leader để sao chép lệnh; cấu hình số tiền riêng cho mỗi lệnh copy; luôn tự ký mọi giao dịch.
 
 ## Success Criteria *(mandatory)*
 
@@ -132,6 +185,12 @@ Khi thị trường chốt và người dùng thắng, hệ thống hiển thị
 - **SC-004**: Hệ thống chạy được trọn vẹn đầu-cuối trên testnet: tối thiểu 1 lệnh nhị phân và 1 lệnh khoảng được vào và nhận thưởng thành công.
 - **SC-005**: Hệ thống xử lý đúng cả 3 tình huống — thắng, thua, người dùng từ chối ký — không tình huống nào làm ứng dụng treo hoặc hiển thị sai trạng thái.
 - **SC-006**: Trong 100% trường hợp không có thị trường mở cho khung đã chọn, hệ thống báo rõ ràng bằng ngôn ngữ thường và không hiển thị chiến lược rỗng hay lỗi kỹ thuật.
+- **SC-007**: Bảng xếp hạng phản ánh đúng kết quả on-chain: lãi/lỗ và tỷ lệ thắng của mỗi nhà đầu tư khớp với dữ liệu settle thật, kiểm chứng được bằng cách đối chiếu vài tài khoản mẫu.
+- **SC-008**: Từ lúc mở bảng xếp hạng đến khi danh sách hiển thị: dưới 3 giây.
+- **SC-009**: Một follower hoàn thành trọn vòng sao chép (nhận thông báo → xác nhận → ký → vị thế xuất hiện) trong dưới 1 phút.
+- **SC-010**: 100% lệnh copy được dựng đúng loại chiến lược của leader và hợp lệ với protocol (không revert vì sai tham số).
+- **SC-011**: Hệ thống không bao giờ tự ký thay người dùng: mọi lệnh copy đều có một bước ký thủ công qua ví — kiểm chứng được rằng không có đường nào bỏ qua bước này.
+- **SC-012**: Khi dữ liệu thưa hoặc lệnh không copy được, hệ thống báo rõ ràng trong 100% trường hợp, không hiển thị bảng trống hay lỗi kỹ thuật.
 
 ## Assumptions
 
@@ -142,3 +201,7 @@ Khi thị trường chốt và người dùng thắng, hệ thống hiển thị
 - Dữ liệu biến động được đọc trực tiếp từ trạng thái on-chain của thị trường tại thời điểm hiển thị.
 - Mobile support nằm ngoài phạm vi v1; ứng dụng chạy trên desktop browser.
 - Số tiền đặt cược và số dư tài khoản chơi tính theo đơn vị **DUSDC (DeepBook Test USDC)** — token riêng của DeepBook Predict, phân biệt với USDC testnet chính thức. Người dùng phải xin DUSDC qua faucet riêng của hackathon trước khi chơi.
+- Lệnh mint trên protocol là owner-only: chỉ chủ sở hữu tài khoản chơi mới ký được lệnh của mình. Hệ thống không bao giờ giữ khóa hay tự ký hộ — đây là ràng buộc protocol, không phải lựa chọn.
+- Bảng xếp hạng lấy dữ liệu từ kết quả on-chain đã settle; không có nguồn dữ liệu bổ sung hay backend riêng cho leaderboard.
+- Vai trò leader là bị động (xuất hiện tự động); vai trò follower là chủ động (chọn theo dõi). Không có vai trò quản trị.
+- Follow state (ai đang theo dõi ai, số tiền copy) lưu client-side (localStorage); không cần backend persistence cho MVP.
