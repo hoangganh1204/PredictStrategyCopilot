@@ -1,10 +1,13 @@
 // T069 — Integration test for the leaderboard API routes.
 // MSW mocks the Public Server; we call the Next route handlers directly.
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import type { PositionSummaryItem } from "@/types/predict-server.js";
-import { GET as leaderboardGET } from "@/app/api/leaderboard/route.js";
+import {
+  GET as leaderboardGET,
+  __resetLeaderboardCacheForTests,
+} from "@/app/api/leaderboard/route.js";
 import { GET as leaderGET } from "@/app/api/leaders/[address]/route.js";
 
 const SERVER_URL = "https://predict-server.testnet.mystenlabs.com";
@@ -65,6 +68,7 @@ const server = setupServer(
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+beforeEach(() => __resetLeaderboardCacheForTests()); // isolate the 30s server cache
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 

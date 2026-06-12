@@ -1,9 +1,9 @@
 // T082 — Build the unsigned mint PTB for a copy-trade. Preserves the leader's
 // strategy via the existing mint builders.
 //
-// CRITICAL: this module MUST NOT import @mysten/dapp-kit or any wallet/signer.
-// It returns an UNSIGNED Transaction — the follower signs it in their own wallet
-// (FR-021: no auto-signing, no custody).
+// CRITICAL (SC-011): this module stays signer-free — it never imports a signing
+// or browser-extension SDK. It returns an UNSIGNED Transaction only; the follower
+// approves and signs it themselves (FR-021: no auto-signing, no custody).
 import { Transaction } from "@mysten/sui/transactions";
 import { buildBinaryMintTx, buildRangeMintTx } from "@/lib/execute/buildMintTx.js";
 import type { CopyParams } from "./types.js";

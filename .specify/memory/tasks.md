@@ -489,16 +489,16 @@
 
 **Purpose**: Cross-cutting validation for US6 + US7. Security, performance, UX compliance.
 
-- [ ] T091 [P] Validate FR-023 compliance: audit all social-trading components for option jargon. Grep for "strike price", "implied vol", "SVI", "oracle", "expiry" in `src/components/Leaderboard*`, `src/components/Investor*`, `src/components/CopyTrade*`, `src/components/Follow*` — replace with plain Vietnamese equivalents.
+- [X] T091 [P] Validate FR-023 compliance: audit all social-trading components for option jargon. Grep for "strike price", "implied vol", "SVI", "oracle", "expiry" in `src/components/Leaderboard*`, `src/components/Investor*`, `src/components/CopyTrade*`, `src/components/Follow*` — replace with plain Vietnamese equivalents.
   - **Verify**: Grep → 0 jargon matches in social-trading components.
 
-- [ ] T092 [P] Validate FR-016 compliance: audit leaderboard for PII. Verify all addresses use `truncateAddress()`. No full 66-char addresses visible. No wallet metadata beyond address.
+- [X] T092 [P] Validate FR-016 compliance: audit leaderboard for PII. Verify all addresses use `truncateAddress()`. No full 66-char addresses visible. No wallet metadata beyond address.
   - **Verify**: Inspect rendered leaderboard — only "0xABCD...1234" format visible.
 
-- [ ] T093 [P] Validate SC-011: verify `src/lib/copytrade/buildCopyMintTx.ts` has zero imports from `@mysten/dapp-kit`, `useSignAndExecuteTransaction`, or any wallet API. Grep the file — assert 0 matches.
+- [X] T093 [P] Validate SC-011: verify `src/lib/copytrade/buildCopyMintTx.ts` has zero imports from `@mysten/dapp-kit`, `useSignAndExecuteTransaction`, or any wallet API. Grep the file — assert 0 matches.
   - **Verify**: `grep -c "dapp-kit\|signAndExecute\|wallet" src/lib/copytrade/buildCopyMintTx.ts` → 0.
 
-- [ ] T094 Validate SC-008: performance test — open `/leaderboard` with testnet data → measure time from navigation to list render. Target: < 3 seconds.
+- [X] T094 Validate SC-008: performance test — open `/leaderboard` with testnet data → measure time from navigation to list render. Target: < 3 seconds.
   - **Verify**: Timed page load < 3s on localhost with real testnet data.
 
 - [ ] T095 End-to-end manual test: full social-trading flow. Open leaderboard → verify leaders reflect real on-chain data → click leader → view detail → follow with 5 DUSDC → wait for/trigger copy notification → sign → position appears in /positions → unfollow → verify no new notifications. Target: trọn vòng < 1 phút (SC-009).
