@@ -60,24 +60,18 @@ function LeaderRow({ leader }: { leader: RankedLeader }) {
         </div>
       </div>
 
-      {/* Win rate */}
-      <div className="hidden w-20 text-right sm:block">
-        <div className="font-mono text-sm text-zinc-200">{Math.round(leader.winRate * 100)}%</div>
-        <div className="text-xs text-zinc-600">win rate</div>
-      </div>
-
-      {/* Settled count */}
+      {/* Wins shown — the data source only publishes claimed (won) bets. */}
       <div className="hidden w-20 text-right sm:block">
         <div className="font-mono text-sm text-zinc-200">{leader.settledCount}</div>
-        <div className="text-xs text-zinc-600">settled</div>
+        <div className="text-xs text-zinc-600">wins shown</div>
       </div>
 
-      {/* Net P&L */}
+      {/* Winnings claimed (not full net P&L — losses aren't exposed). */}
       <div className="w-28 text-right sm:w-32">
         <div className={`font-mono text-sm font-semibold ${pnlClass(leader.netPnl_raw)}`}>
           {signed(leader.netPnl_raw)}
         </div>
-        <div className="text-xs text-zinc-600">net P&L</div>
+        <div className="text-xs text-zinc-600">winnings</div>
       </div>
 
       <svg className="hidden h-4 w-4 shrink-0 text-zinc-600 sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,6 +129,14 @@ export function LeaderboardTable({ isLoading, isError, data }: LeaderboardTableP
         <div className="rounded-xl border border-amber-900/40 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-200/90">
           {data.message ?? "Data is still thin on testnet — the leaderboard fills out as more people play."}
         </div>
+      )}
+
+      {/* Honesty note: the indexer only publishes claimed wins, not losses. */}
+      {hasLeaders && (
+        <p className="px-1 text-xs leading-relaxed text-zinc-500">
+          Ranked by winnings claimed on-chain. The data source only publishes claimed (won) bets, so
+          this isn&apos;t a full win/loss record — treat it as a wins-claimed board, not lifetime P&amp;L.
+        </p>
       )}
 
       {hasLeaders ? (

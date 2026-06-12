@@ -35,14 +35,18 @@ export function InvestorDetailView({ detail }: { detail: InvestorDetailData }) {
         </div>
         <div className="mt-4 flex flex-wrap gap-6 border-t border-zinc-800 pt-4">
           <div>
-            <div className="text-xs text-zinc-500">Settled bets</div>
+            <div className="text-xs text-zinc-500">Wins shown</div>
             <div className="mt-0.5 font-mono text-lg text-zinc-100">{totalSettled}</div>
           </div>
           <div>
-            <div className="text-xs text-zinc-500">Net P&L</div>
+            <div className="text-xs text-zinc-500">Winnings claimed</div>
             <div className={`mt-0.5 font-mono text-lg font-semibold ${pnlClass(netTotal)}`}>{signed(netTotal)}</div>
           </div>
         </div>
+        <p className="mt-3 text-xs leading-relaxed text-zinc-600">
+          Based on bets this investor has claimed on-chain. Losing bets aren&apos;t published by the data
+          source, so this reflects claimed wins — not a full win/loss record.
+        </p>
       </section>
 
       {/* Strategy breakdown */}
