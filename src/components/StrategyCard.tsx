@@ -123,7 +123,7 @@ export function StrategyCard({
   return (
     <div
       onClick={() => onSelect?.(strategy)}
-      className={`card-surface animate-rise flex flex-col gap-4 rounded-2xl border p-5 transition-all ${
+      className={`card-surface animate-rise flex h-full flex-col gap-4 rounded-2xl border p-5 transition-all ${
         onSelect ? "cursor-pointer" : ""
       } ${
         isSelected
@@ -138,7 +138,9 @@ export function StrategyCard({
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-zinc-100">{style.label}</h3>
-          <p className="mt-0.5 text-sm leading-relaxed text-zinc-400">{style.describe(asset)}</p>
+          <p className="mt-0.5 min-h-[2.75rem] text-sm leading-relaxed text-zinc-400">
+            {style.describe(asset)}
+          </p>
         </div>
       </div>
 
@@ -163,8 +165,8 @@ export function StrategyCard({
         />
       </div>
 
-      {/* Meta: time left */}
-      <div className="flex items-center justify-end text-xs">
+      {/* Meta: time left — pushed to the bottom so footers align across cards */}
+      <div className="mt-auto flex items-center justify-end text-xs">
         <span className="flex items-center gap-1.5 text-zinc-500">
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

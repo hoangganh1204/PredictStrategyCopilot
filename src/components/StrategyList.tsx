@@ -182,7 +182,7 @@ export function StrategyList({ isLoading, data, asset, stakeDusdc, onSelect, onB
     <div className="flex flex-col gap-3">
       <MarketPulseBanner impliedVol={impliedVol} pulse={pulse} />
       {recentCloses && <RecentCloses asset={asset} closes={recentCloses} />}
-      <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {strategies.map((s: ApiStrategy) => (
           <StrategyCard
             key={`${s.type}-${s.strike_raw ?? s.lowerStrike_raw}`}
