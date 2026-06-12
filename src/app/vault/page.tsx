@@ -36,6 +36,23 @@ function Stat({ label, value, valueClass = "text-zinc-100" }: { label: string; v
   );
 }
 
+function ExplorerLink({ digest, label }: { digest: string; label: string }) {
+  return (
+    <a
+      href={`https://suiscan.xyz/testnet/tx/${digest}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={digest}
+      className="inline-flex items-center gap-1 text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+    >
+      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      </svg>
+      {label}
+    </a>
+  );
+}
+
 function OpenRoundCard({ round }: { round: VaultOpenRound }) {
   const remaining = useCountdown(round.expiryMs);
   const meta = META[round.type];
@@ -72,6 +89,11 @@ function OpenRoundCard({ round }: { round: VaultOpenRound }) {
           </span>
         </span>
       </div>
+      {round.mintDigest && (
+        <div className="mt-3 border-t border-zinc-800 pt-3">
+          <ExplorerLink digest={round.mintDigest} label="Verify mint on explorer" />
+        </div>
+      )}
     </section>
   );
 }
@@ -89,6 +111,9 @@ function HistoryRow({ r, now }: { r: VaultRoundResult; now: number | null }) {
       </span>
       <span className={`w-28 text-right font-mono ${pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
         {pnl >= 0 ? "+" : ""}{formatDusdcNumber(pnl)}
+      </span>
+      <span className="hidden w-20 justify-end sm:flex">
+        {r.redeemDigest ? <ExplorerLink digest={r.redeemDigest} label="verify" /> : null}
       </span>
       <span className="hidden w-16 text-right text-xs text-zinc-600 sm:inline">
         {now ? timeAgo(now, r.settledAt) : "—"}

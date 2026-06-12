@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useManagerBalance } from "./useManagerBalance.js";
-import { fetchPositionsSummary } from "@/lib/predict-client.js";
+import { fetchPositionsSummary, fetchPositionsRaw } from "@/lib/predict-client.js";
 import type { PositionSummaryItem } from "@/types/predict-server.js";
 import type { PositionState } from "@/lib/execute/types.js";
 
@@ -11,6 +11,8 @@ export interface Position extends PositionSummaryItem {
   positionState: PositionState;
   /** Derived from is_up for display — "up" | "down" | undefined (range) */
   direction?: "up" | "down";
+  /** Mint transaction digest, for an explorer link. */
+  mintDigest?: string;
 }
 
 export const POSITIONS_KEY = ["positions"] as const;
@@ -49,7 +51,21 @@ export function usePositions() {
     refetchInterval: 15_000,
     queryFn: async () => {
       if (!managerId) return [];
-      const items = await fetchPositionsSummary(managerId);
+      const [items, raw] = await Promise.all([
+        fetchPositionsSummary(managerId),
+        fetchPositionsRaw(managerId).catch(() => ({ minted: [], redeemed: [] })),
+      ]);
+
+      // Map each (oracle, direction, strike) to its latest mint tx digest.
+      const digestByKey = new Map<string, { ts: number; digest: string }>();
+      for (const m of raw.minted ?? []) {
+        const key = `${m.oracle_id}|${m.is_up}|${m.strike}`;
+        const prev = digestByKey.get(key);
+        if (!prev || m.checkpoint_timestamp_ms > prev.ts) {
+          digestByKey.set(key, { ts: m.checkpoint_timestamp_ms, digest: m.digest });
+        }
+      }
+
       return items.map((item) => ({
         ...item,
         positionState: toPositionState(item.status),
@@ -57,6 +73,7 @@ export function usePositions() {
           item.is_up === true ? "up" as const :
           item.is_up === false ? "down" as const :
           undefined,
+        mintDigest: digestByKey.get(`${item.oracle_id}|${item.is_up}|${item.strike}`)?.digest,
       }));
     },
   });

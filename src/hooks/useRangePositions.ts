@@ -38,6 +38,8 @@ interface Agg {
   mintedQty: bigint;
   redeemedQty: bigint;
   cost: bigint;
+  /** Latest mint tx digest (events are newest-first), for an explorer link. */
+  digest?: string;
 }
 
 const keyOf = (p: RangeEventJson) =>
@@ -73,7 +75,11 @@ export function useRangePositions() {
       for (const e of mintedEv.data.filter(mine)) {
         const j = e.parsedJson as RangeEventJson;
         const k = keyOf(j);
-        const a = agg.get(k) ?? { json: j, mintedQty: 0n, redeemedQty: 0n, cost: 0n };
+        // Events are newest-first, so the first one seen carries the latest digest.
+        const a = agg.get(k) ?? {
+          json: j, mintedQty: 0n, redeemedQty: 0n, cost: 0n,
+          digest: (e as { id?: { txDigest?: string } }).id?.txDigest,
+        };
         a.mintedQty += BigInt(j.quantity);
         a.cost += BigInt(j.cost ?? "0");
         agg.set(k, a);
@@ -122,6 +128,7 @@ export function useRangePositions() {
           status: positionState,
           positionState,
           direction: undefined,
+          mintDigest: a.digest,
           // Stash the aggregation key so we can attach the live mark below.
           _key: k,
         } as Position & { _key: string });

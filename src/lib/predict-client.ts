@@ -63,3 +63,20 @@ export function fetchPositionsSummary(
 ): Promise<PositionsSummaryResponse> {
   return get(`/managers/${managerId}/positions/summary`);
 }
+
+/** One on-chain mint event (binary) — carries the tx digest for explorer links. */
+export interface MintedEventRecord {
+  oracle_id: string;
+  is_up: boolean;
+  strike: number;
+  digest: string;
+  checkpoint_timestamp_ms: number;
+}
+
+/** Raw minted/redeemed events for a manager (binary). The summary endpoint omits
+ *  the tx digest, so we read it from here to link each position to its mint tx. */
+export function fetchPositionsRaw(
+  managerId: string
+): Promise<{ minted: MintedEventRecord[]; redeemed: unknown[] }> {
+  return get(`/managers/${managerId}/positions`);
+}
