@@ -20,17 +20,34 @@ export class PredictClientError extends Error {
   }
 }
 
+const RETRY_DELAY_MS = 350;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function get<T>(path: string): Promise<T> {
   const url = `${PREDICT_CONFIG.SERVER_URL}${path}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new PredictClientError(
-      res.status,
-      path,
-      `Predict server returned ${res.status} for ${path}`
-    );
+  // The public testnet server occasionally returns a transient 5xx (or a flaky
+  // connection) that succeeds on an immediate retry — retry once before failing.
+  let lastStatus = 0;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(url);
+    } catch {
+      if (attempt === 0) {
+        await sleep(RETRY_DELAY_MS);
+        continue;
+      }
+      throw new PredictClientError(0, path, `Predict server unreachable for ${path}`);
+    }
+    if (res.ok) return res.json() as Promise<T>;
+    lastStatus = res.status;
+    if (res.status >= 500 && attempt === 0) {
+      await sleep(RETRY_DELAY_MS);
+      continue;
+    }
+    throw new PredictClientError(res.status, path, `Predict server returned ${res.status} for ${path}`);
   }
-  return res.json() as Promise<T>;
+  throw new PredictClientError(lastStatus, path, `Predict server returned ${lastStatus} for ${path}`);
 }
 
 export function fetchOracleList(predictId: string): Promise<OracleListResponse> {

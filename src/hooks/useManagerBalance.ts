@@ -28,12 +28,22 @@ export function useManagerBalance() {
     queryFn: async () => {
       if (!account) return null;
 
+      // Resolve the manager. A failure here means we genuinely can't find an
+      // account (or the lookup is down) → show the create-account state.
+      let managerId: string | null = null;
       try {
-        const managerId = await findManagerId(account.address);
-        if (!managerId) {
-          return { managerId: null, balance_raw: 0n, balance_dusdc: 0 };
-        }
+        managerId = await findManagerId(account.address);
+      } catch (err) {
+        console.warn("[useManagerBalance] manager lookup failed", err);
+        return { managerId: null, balance_raw: 0n, balance_dusdc: 0 };
+      }
+      if (!managerId) {
+        return { managerId: null, balance_raw: 0n, balance_dusdc: 0 };
+      }
 
+      // Balance fetch can hit a transient 5xx — keep the managerId so the
+      // account doesn't vanish; the next poll refreshes the balance.
+      try {
         const summary = await fetchManagerSummary(managerId);
         const rawBalance = summary.trading_balance ?? summary.balances?.[0]?.balance ?? 0;
         const balance_raw = BigInt(Math.round(rawBalance));
@@ -43,9 +53,8 @@ export function useManagerBalance() {
           balance_dusdc: Number(balance_raw) / Number(DUSDC_SCALE),
         };
       } catch (err) {
-        console.error("[useManagerBalance]", err);
-        // Return null so the UI shows "Create account" instead of an infinite skeleton
-        return { managerId: null, balance_raw: 0n, balance_dusdc: 0 };
+        console.warn("[useManagerBalance] balance fetch failed, keeping manager", err);
+        return { managerId, balance_raw: 0n, balance_dusdc: 0 };
       }
     },
   });
