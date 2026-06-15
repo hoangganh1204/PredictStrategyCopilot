@@ -6,6 +6,7 @@ import { PREDICT_CONFIG } from "@/config/predict.js";
 import { fetchAllManagerIds, fetchManagerPositions } from "@/lib/predict-client.js";
 import { aggregateLeaderStats, rankLeaders } from "@/lib/leaderboard/computeLeaderboard.js";
 import type { LeaderStats, LeaderboardResult } from "@/lib/leaderboard/types.js";
+import type { PositionSummaryItem } from "@/types/predict-server.js";
 
 // Scan the most-recently-created managers first and cap the fan-out so the board
 // loads in under 3s (SC-008). On testnet the active managers are the recent ones,
@@ -32,21 +33,31 @@ async function computeLeaderboard(): Promise<LeaderboardResult> {
     .sort((a, b) => (b.checkpoint ?? 0) - (a.checkpoint ?? 0))
     .slice(0, MAX_MANAGERS);
 
-  const stats: LeaderStats[] = [];
+  // A player (owner) can have several managers — merge all their positions so
+  // each owner is one leaderboard entry (avoids duplicate-address rows).
+  const byOwner = new Map<string, PositionSummaryItem[]>();
   for (let i = 0; i < recent.length; i += CONCURRENCY) {
     const batch = recent.slice(i, i + CONCURRENCY);
-    const settledBatch = await Promise.all(
+    const fetched = await Promise.all(
       batch.map(async (m) => {
         try {
-          const positions = await fetchManagerPositions(m.manager_id);
-          return aggregateLeaderStats(m.owner, positions);
+          return { owner: m.owner, positions: await fetchManagerPositions(m.manager_id) };
         } catch {
           return null; // skip unreachable managers, don't fail the whole board
         }
       })
     );
-    for (const s of settledBatch) if (s) stats.push(s);
+    for (const r of fetched) {
+      if (!r) continue;
+      const arr = byOwner.get(r.owner) ?? [];
+      arr.push(...r.positions);
+      byOwner.set(r.owner, arr);
+    }
   }
+
+  const stats: LeaderStats[] = [...byOwner.entries()].map(([owner, positions]) =>
+    aggregateLeaderStats(owner, positions)
+  );
 
   const result = rankLeaders(stats);
   result.leaders = result.leaders.slice(0, TOP_N);

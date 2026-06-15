@@ -203,7 +203,7 @@ export function LeaderboardTable({ isLoading, isError, data }: LeaderboardTableP
           {/* Podium — top 3 */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
             {podium.map((l) => (
-              <PodiumCard key={l.address} leader={l} />
+              <PodiumCard key={`${l.rank}-${l.address}`} leader={l} />
             ))}
           </div>
 
@@ -211,7 +211,7 @@ export function LeaderboardTable({ isLoading, isError, data }: LeaderboardTableP
           {rest.length > 0 && (
             <div className="flex flex-col gap-2">
               {rest.map((l) => (
-                <LeaderRow key={l.address} leader={l} max={max} />
+                <LeaderRow key={`${l.rank}-${l.address}`} leader={l} max={max} />
               ))}
             </div>
           )}
