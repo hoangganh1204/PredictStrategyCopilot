@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { usePositions, POSITIONS_KEY } from "@/hooks/usePositions.js";
 import { useRangePositions, RANGE_POSITIONS_KEY } from "@/hooks/useRangePositions.js";
@@ -15,12 +16,28 @@ import type { TxResult } from "@/lib/execute/types.js";
 
 export default function PositionsPage() {
   const account = useCurrentAccount();
+  const queryClient = useQueryClient();
   const { data: balance } = useManagerBalance();
   const { data: binaryPositions, isLoading } = usePositions();
   // Range positions aren't indexed by the Public Server — read them from chain.
   const { data: rangePositions } = useRangePositions();
   const { execute, isPending } = useExecuteTx();
   const [overlayResult, setOverlayResult] = useState<TxResult | null>(null);
+
+  // Refresh positions/balance after a claim. The indexer lags a few seconds, so
+  // we also refetch on a short delay — this clears a stale "Claim" button so the
+  // user can't click an already-redeemed position again.
+  function refreshAfterClaim() {
+    const keys = [
+      [...MANAGER_BALANCE_KEY, account?.address],
+      [...POSITIONS_KEY, account?.address],
+      [...RANGE_POSITIONS_KEY, account?.address, balance?.managerId],
+    ];
+    const invalidate = () => keys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+    invalidate();
+    setTimeout(invalidate, 3000);
+    setTimeout(invalidate, 8000);
+  }
 
   if (!account) {
     return (
@@ -52,12 +69,11 @@ export default function PositionsPage() {
       isRange,
     });
 
-    const result = await execute(tx, [
-      [...MANAGER_BALANCE_KEY, account?.address],
-      [...POSITIONS_KEY, account?.address],
-      [...RANGE_POSITIONS_KEY, account?.address, balance?.managerId],
-    ]);
+    const result = await execute(tx);
     setOverlayResult(result);
+    // Refresh regardless of outcome — a successful claim AND an "already claimed"
+    // abort both mean the Claim button should go away.
+    refreshAfterClaim();
   }
 
   // Merge binary (server) + range (on-chain) positions; surface claimable first.

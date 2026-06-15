@@ -50,6 +50,13 @@ function isRetryableConflict(error: unknown): boolean {
   return RETRYABLE_PATTERNS.some((p) => m.includes(p));
 }
 
+// Redeeming a position that's already been claimed aborts in
+// predict_manager::decrease_position (nothing left to remove). The winnings were
+// already credited on the first claim — this is a harmless duplicate, not a loss.
+function isAlreadyClaimed(error: unknown): boolean {
+  return msgOf(error).includes("decrease_position");
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const MAX_ATTEMPTS = 3;
 
@@ -101,6 +108,11 @@ export function useExecuteTx(): UseExecuteTxReturn {
 
         const result: TxResult = isUserRejection(lastErr)
           ? { status: "rejected", error: "You cancelled the transaction" }
+          : isAlreadyClaimed(lastErr)
+          ? {
+              status: "failed",
+              error: "This position was already claimed — your winnings are already in your balance.",
+            }
           : isRetryableConflict(lastErr)
           ? {
               status: "failed",
