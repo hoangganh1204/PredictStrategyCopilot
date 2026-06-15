@@ -30,13 +30,16 @@ export function useVault() {
     await stateQuery.refetch();
   }
 
-  const balanceQuery = useQuery<number>({
+  const balanceQuery = useQuery<{ balance: number; owner: string | null }>({
     queryKey: ["vault-balance", managerId],
     enabled: !!managerId,
     refetchInterval: 10_000,
     queryFn: async () => {
       const s = await fetchManagerSummary(managerId!);
-      return s.trading_balance ?? s.balances?.[0]?.balance ?? 0;
+      return {
+        balance: s.trading_balance ?? s.balances?.[0]?.balance ?? 0,
+        owner: s.owner ?? null,
+      };
     },
   });
 
@@ -44,7 +47,10 @@ export function useVault() {
     state,
     paused,
     setPaused,
-    balanceRaw: balanceQuery.data ?? null,
+    balanceRaw: balanceQuery.data?.balance ?? null,
+    /** The keeper wallet that owns this vault — NOT the connected wallet. */
+    ownerAddress: balanceQuery.data?.owner ?? null,
+    managerId,
     isLoading: stateQuery.isLoading,
   };
 }

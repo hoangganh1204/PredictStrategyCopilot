@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/AppHeader.js";
 import { useVault } from "@/hooks/useVault.js";
 import { useCountdown, useNow } from "@/hooks/useCountdown.js";
 import { formatCountdown, formatDusdcNumber, formatPrice } from "@/lib/format.js";
+import { truncateAddress } from "@/lib/leaderboard/computeLeaderboard.js";
 import type { VaultOpenRound, VaultRoundResult, VaultStrategyType } from "@/lib/vault/types.js";
 
 const META: Record<VaultStrategyType, { label: string; icon: string; chip: string; level: string }> = {
@@ -141,7 +142,7 @@ function NotRunning() {
 }
 
 export default function VaultPage() {
-  const { state, paused, setPaused, balanceRaw, isLoading } = useVault();
+  const { state, paused, setPaused, balanceRaw, ownerAddress, isLoading } = useVault();
   const now = useNow(5000);
   const [toggling, setToggling] = useState(false);
 
@@ -177,6 +178,13 @@ export default function VaultPage() {
             <p className="text-sm text-zinc-500">
               Deposit once — the keeper redeems each settled round and re-enters the strategy automatically.
             </p>
+            {ownerAddress && (
+              <p className="text-xs text-zinc-600">
+                Shared demo vault · runs on the keeper account{" "}
+                <span className="font-mono text-zinc-400">{truncateAddress(ownerAddress)}</span> — independent of the
+                wallet you&apos;re connected with.
+              </p>
+            )}
           </div>
 
           {state && (
