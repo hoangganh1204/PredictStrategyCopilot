@@ -5,6 +5,8 @@
 import { useState } from "react";
 import { DUSDC_SCALE } from "@/config/predict.js";
 import { useFollowState } from "@/hooks/useFollowState.js";
+import { ConfirmDialog } from "./ConfirmDialog.js";
+import { truncateAddress } from "@/lib/leaderboard/computeLeaderboard.js";
 
 const SCALE = Number(DUSDC_SCALE);
 const DEFAULT_AMOUNT = "5";
@@ -13,6 +15,7 @@ export function FollowButton({ leaderAddress }: { leaderAddress: string }) {
   const { isFollowing, followLeader, unfollowLeader } = useFollowState();
   const following = isFollowing(leaderAddress);
   const [entering, setEntering] = useState(false);
+  const [confirmUnfollow, setConfirmUnfollow] = useState(false);
   const [amount, setAmount] = useState(DEFAULT_AMOUNT);
 
   function confirmFollow() {
@@ -22,20 +25,31 @@ export function FollowButton({ leaderAddress }: { leaderAddress: string }) {
     setEntering(false);
   }
 
-  function handleUnfollow() {
-    if (typeof window !== "undefined" && !window.confirm("Stop following this investor?")) return;
-    unfollowLeader(leaderAddress);
-  }
-
   if (following) {
     return (
-      <button
-        type="button"
-        onClick={handleUnfollow}
-        className="flex shrink-0 items-center gap-2 rounded-xl border border-emerald-700/60 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:border-red-700/60 hover:bg-red-500/10 hover:text-red-300"
-      >
-        Following ✓
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={() => setConfirmUnfollow(true)}
+          className="group flex shrink-0 items-center gap-2 rounded-xl border border-emerald-700/60 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:border-red-700/60 hover:bg-red-500/10 hover:text-red-300"
+        >
+          <span className="group-hover:hidden">Following ✓</span>
+          <span className="hidden group-hover:inline">Unfollow</span>
+        </button>
+        <ConfirmDialog
+          open={confirmUnfollow}
+          title="Stop following?"
+          message={`You'll no longer be prompted to copy ${truncateAddress(leaderAddress)}'s bets. Your open positions are unaffected.`}
+          confirmLabel="Unfollow"
+          cancelLabel="Keep following"
+          tone="danger"
+          onConfirm={() => {
+            unfollowLeader(leaderAddress);
+            setConfirmUnfollow(false);
+          }}
+          onCancel={() => setConfirmUnfollow(false)}
+        />
+      </>
     );
   }
 
