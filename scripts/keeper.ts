@@ -424,7 +424,16 @@ async function main() {
       consecutiveErrors = 0;
     } catch (e) {
       consecutiveErrors++;
-      log(`cycle error (${consecutiveErrors}): ${e instanceof Error ? e.message : e}`);
+      const msg = e instanceof Error ? e.message : String(e);
+      log(`cycle error (${consecutiveErrors}): ${msg}`);
+      // Surface an out-of-gas condition to the dashboard so it self-explains
+      // instead of just looking "offline" for no clear reason.
+      if (/gas|lower than the needed amount/i.test(msg)) {
+        const a = keeperAddress;
+        state.pausedReason = `Out of SUI gas — top up the keeper wallet ${a.slice(0, 6)}…${a.slice(-4)} with testnet SUI to resume.`;
+        state.updatedAt = Date.now();
+        saveState(state);
+      }
       if (consecutiveErrors >= 10) {
         log("too many consecutive errors — backing off 5min");
         await sleep(300_000);

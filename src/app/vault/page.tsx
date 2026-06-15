@@ -202,10 +202,17 @@ export default function VaultPage() {
           )}
         </div>
 
-        {/* Paused banner */}
+        {/* Paused banner (user toggled off) */}
         {state && paused && (
           <div className="rounded-xl border border-amber-900/40 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-200/90">
             ⏸ Auto-betting is off. The keeper settles any open round but won&apos;t enter new ones until you resume.
+          </div>
+        )}
+
+        {/* Keeper-reported issue (e.g. out of SUI gas / below floor) — self-explains why it stalled */}
+        {state && !paused && state.pausedReason && (
+          <div className="rounded-xl border border-red-900/50 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            ⚠️ Auto-trade stalled: {state.pausedReason}
           </div>
         )}
 
