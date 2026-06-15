@@ -29,8 +29,12 @@ const RETRYABLE_PATTERNS = [
   "is not available",
   "reserved for another",
   "could not be locked",
+  "locked object", // "...because of locked objects"
+  "objectlockconflict",
   "object is locked",
   "is locked by",
+  "conflicting transaction",
+  "quorum of validators",
 ];
 
 function msgOf(error: unknown): string {
