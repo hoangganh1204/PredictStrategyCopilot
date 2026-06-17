@@ -37,6 +37,15 @@ export async function POST(req: NextRequest) {
   } catch {
     /* default false */
   }
-  fs.writeFileSync(CONTROL_PATH, JSON.stringify({ paused }, null, 2));
+  try {
+    fs.writeFileSync(CONTROL_PATH, JSON.stringify({ paused }, null, 2));
+  } catch {
+    // Read-only filesystem (e.g. serverless/Vercel) with no co-located keeper —
+    // nothing to control here, so don't 500.
+    return NextResponse.json(
+      { ok: false, paused, error: "Pause control unavailable in this deployment." },
+      { status: 200 }
+    );
+  }
   return NextResponse.json({ ok: true, paused });
 }
